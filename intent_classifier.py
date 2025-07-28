@@ -41,19 +41,20 @@ class IntentClassifier:
 
 # お手本 (Examples)
 - 発言: 「AIで議事録を自動要約したいんだけど、何かいい方法ある？」
-  - JSON: {"intent": ["PROBLEM_DEFINITION", "QUESTION"], "reason": "ユーザーは『議事録の自動要約』という中心課題を提示し、同時に質問している。"}
+  - JSON: {{"intent": ["PROBLEM_DEFINITION", "QUESTION"], "reason": "ユーザーは『議事録の自動要約』という中心課題を提示し、同時に質問している。"}}
 - 発言: 「いいね。ただし、利用するモデルはオープンソースのものに限定してほしい。」
-  - JSON: {"intent": ["CONSTRAINT_ADDITION"], "reason": "『オープンソースに限定』という明確な制約を追加している。"}
+  - JSON: {{"intent": ["CONSTRAINT_ADDITION"], "reason": "『オープンソースに限定』という明確な制約を追加している。"}}
 
 # 分析対象
 ユーザー発言: \"\"\"
 {user_message}
 \"\"\"
 
-# 出力フォーマット
-{"intent": [String], "reason": String}
+# 出力
+以下のJSON形式で必ず応答してください：
+{{"intent": [String], "reason": String}}
 
-# 出力"""
+JSON:"""
     
     def __init__(self, api_url: str, api_key: str, model: str = "gpt-3.5-turbo"):
         self.api_url = api_url
@@ -74,16 +75,14 @@ class IntentClassifier:
         prompt = self.PROMPT_TEMPLATE.format(user_message=user_message)
         
         payload = {
-            "model": self.model,
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "temperature": 0.1,
-            "max_tokens": 200
+            "max_completion_tokens": 200
         }
         
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "api-key": self.api_key,
             "Content-Type": "application/json"
         }
         

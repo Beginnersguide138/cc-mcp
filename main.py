@@ -4,6 +4,10 @@ import os
 from typing import Dict, Any, Optional
 import httpx
 from fastmcp import FastMCP
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 from intent_classifier import IntentClassifier
 from context_store import HierarchicalContextStore
@@ -99,16 +103,14 @@ class MCPServer:
     async def _call_main_llm(self, prompt: str) -> str:
         """Call the main LLM with the synthesized prompt"""
         payload = {
-            "model": self.main_model,
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "temperature": self.main_temperature,
-            "max_tokens": 2000
+            "max_completion_tokens": 2000
         }
         
         headers = {
-            "Authorization": f"Bearer {self.main_api_key}",
+            "api-key": self.main_api_key,
             "Content-Type": "application/json"
         }
         

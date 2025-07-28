@@ -53,6 +53,7 @@ dependencies = [
     { name = "fastmcp" },
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "python-dotenv" },
     { name = "typing-extensions" },
 ]
 
@@ -61,6 +62,7 @@ requires-dist = [
     { name = "fastmcp", specifier = ">=0.2.0" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "typing-extensions", specifier = ">=4.8.0" },
 ]
 
