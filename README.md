@@ -35,6 +35,11 @@ CC-MCPは、LLM（大規模言語モデル）を活用したAIエージェント
 - `clear_context` - 全コンテキストのクリア
 - `get_debug_info` - 詳細なデバッグ情報取得
 
+### トランスポート
+- **SSE (Server-Sent Events)** - HTTP上でのリアルタイム通信（推奨）
+- ポート: 8001 (デフォルト)
+- エンドポイント: `http://127.0.0.1:8001/sse/`
+
 ### 対応LLM API
 - Azure OpenAI (推奨)
 - OpenAI API
@@ -76,7 +81,10 @@ MAIN_MODEL=gpt-4
 
 ### MCPサーバーの起動
 ```bash
+# SSE トランスポートでサーバーを起動（推奨）
 uv run main.py
+
+# サーバーは http://127.0.0.1:8001/sse/ で利用可能になります
 ```
 
 ### デモの実行
@@ -128,6 +136,9 @@ uv run test_server.py
 
 # 実際のAPI使用のライブテスト（要API設定）
 uv run test_live.py
+
+# SSEトランスポートのテスト
+uv run test_sse_client.py
 
 # デバッグ用テスト
 uv run debug_test.py

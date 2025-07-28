@@ -151,7 +151,7 @@ class MCPServer:
 
 
 # Initialize FastMCP server
-mcp = FastMCP("CC-MCP")
+mcp = FastMCP(name="CC-MCP")
 server = MCPServer()
 
 
@@ -228,21 +228,19 @@ async def get_debug_info(message: str, session_id: str = "default") -> Dict[str,
     return server.prompt_engine.create_debug_info(message)
 
 
-async def main():
+def main():
     """Main entry point for the MCP server"""
-    try:
-        print("🚀 Starting CC-MCP Server...")
-        print("📋 Available tools:")
-        print("  - process_user_message: Process user messages with context management")
-        print("  - export_context: Export conversation context")
-        print("  - import_context: Import conversation context")
-        print("  - clear_context: Clear all context")
-        print("  - get_debug_info: Get debug information")
-        
-        await mcp.run()
-    finally:
-        await server.close()
+    print("🚀 Starting CC-MCP Server...")
+    print("📋 Available tools:")
+    print("  - process_user_message: Process user messages with context management")
+    print("  - export_context: Export conversation context")
+    print("  - import_context: Import conversation context")
+    print("  - clear_context: Clear all context")
+    print("  - get_debug_info: Get debug information")
+    
+    # Use mcp.run() directly without asyncio.run() to avoid nested event loop
+    mcp.run(transport='sse', port=8001)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
