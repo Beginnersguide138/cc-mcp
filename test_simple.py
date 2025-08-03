@@ -28,14 +28,16 @@ async def test_classifier_with_debug():
         print("-" * 50)
         
         payload = {
+            "model": os.getenv("CLASSIFIER_MODEL"),
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "max_completion_tokens": 200
+            "max_tokens": 200,
+            "temperature": 0.1
         }
         
         headers = {
-            "api-key": os.getenv("CLASSIFIER_API_KEY"),
+            "Authorization": f"Bearer {os.getenv('CLASSIFIER_API_KEY')}",
             "Content-Type": "application/json"
         }
         
@@ -48,6 +50,12 @@ async def test_classifier_with_debug():
             )
             
             print(f"✅ Status: {response.status_code}")
+            
+            if response.status_code != 200:
+                print(f"❌ API Error: {response.status_code}")
+                print(f"Response: {response.text}")
+                return
+                
             result = response.json()
             content = result["choices"][0]["message"]["content"].strip()
             

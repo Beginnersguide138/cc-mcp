@@ -75,14 +75,16 @@ JSON:"""
         prompt = self.PROMPT_TEMPLATE.format(user_message=user_message)
         
         payload = {
+            "model": self.model,
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "max_completion_tokens": 200
+            "max_tokens": 200,
+            "temperature": 0.1
         }
         
         headers = {
-            "api-key": self.api_key,
+            "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
         

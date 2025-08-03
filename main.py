@@ -1,7 +1,7 @@
 import asyncio
 import json
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 import httpx
 from fastmcp import FastMCP
 from dotenv import load_dotenv
@@ -103,14 +103,16 @@ class MCPServer:
     async def _call_main_llm(self, prompt: str) -> str:
         """Call the main LLM with the synthesized prompt"""
         payload = {
+            "model": self.main_model,
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "max_completion_tokens": 2000
+            "max_tokens": 2000,
+            "temperature": self.main_temperature
         }
         
         headers = {
-            "api-key": self.main_api_key,
+            "Authorization": f"Bearer {self.main_api_key}",
             "Content-Type": "application/json"
         }
         
@@ -156,74 +158,74 @@ server = MCPServer()
 
 
 @mcp.tool()
-async def process_user_message(message: str, session_id: str = "default") -> Dict[str, Any]:
+async def process_user_message(message: str, session_id: str = "default"):
     """
     Process a user message through the MCP system.
-    
-    Args:
-        message: The user's message to process
-        session_id: Optional session identifier for context isolation
-    
-    Returns:
-        Response from the AI assistant with processing metadata
+
+Args:
+    message: The user's message to process
+    session_id: Optional session identifier for context isolation
+
+Returns:
+    Response from the AI assistant with processing metadata
     """
     return await server.process_message(message, session_id)
 
 
 @mcp.tool()
-async def export_context(session_id: str = "default") -> str:
+async def export_context(session_id: str = "default"):
     """
     Export the current conversation context as JSON.
-    
-    Args:
-        session_id: Session identifier
-    
-    Returns:
-        JSON string containing the context state
+
+Args:
+    session_id: Session identifier
+
+Returns:
+    JSON string containing the context state
     """
     return await server.get_context_export(session_id)
 
 
 @mcp.tool()
-async def import_context(json_state: str, session_id: str = "default") -> bool:
+async def import_context(json_state: str, session_id: str = "default"):
     """
     Import conversation context from JSON.
-    
-    Args:
-        json_state: JSON string containing context state
-        session_id: Session identifier
-    
-    Returns:
-        True if import was successful, False otherwise
+
+Args:
+    json_state: JSON string containing context state
+    session_id: Session identifier
+
+Returns:
+    True if import was successful, False otherwise
     """
     return await server.import_context(json_state, session_id)
 
 
 @mcp.tool()
-async def clear_context(session_id: str = "default") -> bool:
+async def clear_context(session_id: str = "default"):
     """
     Clear all stored conversation context.
-    
-    Args:
-        session_id: Session identifier
-    
-    Returns:
-        True if clear was successful, False otherwise
+
+Args:
+    session_id: Session identifier
+
+Returns:
+    True if clear was successful, False otherwise
     """
     return await server.clear_context(session_id)
 
 
 @mcp.tool()
-async def get_debug_info(message: str, session_id: str = "default") -> Dict[str, Any]:
+async def get_debug_info(message: str, session_id: str = "default"):
     """
     Get detailed debug information about prompt synthesis.
-    
-    Args:
-        message: Message to analyze
-        session_id: Session identifier
-    
-    Returns:
-        Debug information including context analysis and prompt synthesis details
+
+Args:
+    message: Message to analyze
+    session_id: Session identifier
+
+Returns:
+    Debug information including context analysis and prompt synthesis details
     """
     return server.prompt_engine.create_debug_info(message)
 
