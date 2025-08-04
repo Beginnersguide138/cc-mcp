@@ -127,14 +127,13 @@ cp .env.example .env
 
 ### **Environment Configuration**
 ```bash
-# .env file example
-CLASSIFIER_API_URL=https://your-resource.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-12-01-preview
-CLASSIFIER_API_KEY=your-api-key
-CLASSIFIER_MODEL=gpt-4
+# .env file example - Only 3 variables needed!
+CLASSIFIER_API_URL=https://api.openai.com/v1/chat/completions
+CLASSIFIER_API_KEY=sk-your_openai_api_key_here
+CLASSIFIER_MODEL=gpt-3.5-turbo
 
-MAIN_API_URL=https://your-resource.openai.azure.com/openai/deployments/gpt-4/chat/completions?api-version=2024-12-01-preview
-MAIN_API_KEY=your-api-key
-MAIN_MODEL=gpt-4
+# Alternative providers (see .env.example for full list):
+# Azure OpenAI, Anthropic Claude, Google Gemini supported
 ```
 
 ### **Launch Server**
