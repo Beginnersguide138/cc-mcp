@@ -60,7 +60,15 @@ class PromptSynthesisEngine:
         if core_problem is None:
             return "（まだ明確な課題が定義されていません。ユーザーの課題を理解し、支援することを目指してください。）"
         
-        return f"**主要課題**: {core_problem}"
+        # Add keywords if available
+        context_summary = self.context_store.get_context_summary()
+        core_keywords_text = self.context_store.get_core_keywords_text() if hasattr(self.context_store, 'get_core_keywords_text') else ""
+        
+        formatted = f"**主要課題**: {core_problem}"
+        if core_keywords_text:
+            formatted += f"\n{core_keywords_text}"
+        
+        return formatted
     
     def _format_evolving_context(self, evolving_items: list) -> str:
         """Format the evolving context section"""
@@ -71,7 +79,14 @@ class PromptSynthesisEngine:
         for item in evolving_items:
             formatted_items.append(f"- {item}")
         
-        return "\n".join(formatted_items)
+        # Add evolving keywords if available
+        evolving_keywords_text = self.context_store.get_evolving_keywords_text() if hasattr(self.context_store, 'get_evolving_keywords_text') else ""
+        
+        result = "\n".join(formatted_items)
+        if evolving_keywords_text:
+            result += f"\n\n{evolving_keywords_text}"
+        
+        return result
     
     def _format_turn_context(self, recent_conversation: str) -> str:
         """Format the turn context section"""

@@ -57,7 +57,14 @@ class IntentClassifier:
 JSON:"""
     
     def __init__(self, api_url: str, api_key: str, model: str = "gpt-3.5-turbo"):
-        self.api_url = api_url
+        # Ensure the URL includes the chat/completions endpoint
+        if not api_url.endswith('/chat/completions'):
+            if api_url.endswith('/'):
+                self.api_url = api_url + 'chat/completions'
+            else:
+                self.api_url = api_url + '/chat/completions'
+        else:
+            self.api_url = api_url
         self.api_key = api_key
         self.model = model
         self.client = httpx.AsyncClient()

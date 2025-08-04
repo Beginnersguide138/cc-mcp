@@ -1,200 +1,243 @@
+"""
+Hierarchical Context Store for CC-MCP Server v1.3
+階層型コンテキストストア（キーワード抽出対応）
+"""
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 import json
 
-
 @dataclass
 class Message:
+    """Represents a single message in the conversation"""
     content: str
-    timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class CoreContext:
-    """Long-term memory for problem definition"""
-    problem_definition: Optional[Message] = None
-    
-    def set_problem(self, message: Message):
-        """Set the core problem definition"""
-        self.problem_definition = message
-    
-    def get_problem(self) -> Optional[str]:
-        """Get the problem definition text"""
-        return self.problem_definition.content if self.problem_definition else None
-
+    role: str  # "user" or "assistant"
+    timestamp: datetime
+    intent_labels: List[str]
 
 @dataclass
-class EvolvingContext:
-    """Medium-term memory for constraints and refinements"""
-    constraints: List[Message] = field(default_factory=list)
-    refinements: List[Message] = field(default_factory=list)
-    
-    def add_constraint(self, message: Message):
-        """Add a new constraint"""
-        self.constraints.append(message)
-    
-    def add_refinement(self, message: Message):
-        """Add a new refinement"""
-        self.refinements.append(message)
-    
-    def get_all_items(self) -> List[str]:
-        """Get all constraints and refinements as text list"""
-        items = []
-        for constraint in self.constraints:
-            items.append(f"制約: {constraint.content}")
-        for refinement in self.refinements:
-            items.append(f"詳細化: {refinement.content}")
-        return items
-
-
-@dataclass
-class TurnContext:
-    """Short-term memory for recent conversation turns"""
-    messages: List[Message] = field(default_factory=list)
-    max_turns: int = 3
-    
-    def add_message(self, message: Message):
-        """Add a message and maintain max_turns limit"""
-        self.messages.append(message)
-        if len(self.messages) > self.max_turns:
-            self.messages = self.messages[-self.max_turns:]
-    
-    def get_recent_conversation(self) -> str:
-        """Get recent conversation as formatted text"""
-        if not self.messages:
-            return ""
-        
-        conversation = []
-        for msg in self.messages:
-            role = msg.metadata.get("role", "user")
-            conversation.append(f"{role}: {msg.content}")
-        
-        return "\n".join(conversation)
-
+class ContextItem:
+    """Represents a context item with content and keywords"""
+    content: str
+    keywords: List[Dict[str, float]]  # [{"keyword": "word", "score": 0.123}, ...]
+    timestamp: datetime
+    intent_labels: List[str]
 
 class HierarchicalContextStore:
     """
-    Hierarchical Context Store that manages three levels of memory:
-    - Core Context (long-term): Problem definitions
-    - Evolving Context (medium-term): Constraints and refinements
-    - Turn Context (short-term): Recent conversation history
+    Hierarchical Context Store that manages conversation context across three levels:
+    - Core Context (Long-term memory): Problem definitions with keywords
+    - Evolving Context (Medium-term memory): Constraints and decisions with keywords  
+    - Turn Context (Short-term memory): Recent 2-3 conversation turns
     """
     
     def __init__(self):
-        self.core = CoreContext()
-        self.evolving = EvolvingContext()
-        self.turn = TurnContext()
+        # Core Context: Stores the main problem/goal with keywords
+        self.core_context: Optional[ContextItem] = None
+        
+        # Evolving Context: Stores constraints, decisions, and refinements with keywords
+        self.evolving_context: List[ContextItem] = []
+        
+        # Turn Context: Stores recent conversation history
+        self.turn_context: List[Message] = []
+        
+        # Maximum number of messages to keep in turn context
+        self.max_turn_context = 6  # 2-3 conversation turns (user + assistant pairs)
     
-    def store_message(self, content: str, intent_labels: List[str], role: str = "user") -> None:
+    def store_message(self, content: str, intent_labels: List[str], role: str = "user", keywords: Optional[List[Dict[str, float]]] = None) -> None:
         """
-        Store a message in the appropriate context based on intent labels.
+        Store a message in the appropriate context level based on intent labels
         
         Args:
             content: The message content
-            intent_labels: List of intent labels from the classifier
-            role: The role of the message sender (user/assistant)
+            intent_labels: List of intent classification labels
+            role: The role of the message sender ("user" or "assistant")
+            keywords: Optional extracted keywords for important messages
         """
         message = Message(
             content=content,
-            metadata={"role": role, "intent": intent_labels}
+            role=role,
+            timestamp=datetime.now(),
+            intent_labels=intent_labels
         )
         
-        # Always add to turn context for conversation flow
-        self.turn.add_message(message)
+        # Always add to turn context
+        self.turn_context.append(message)
+        self._trim_turn_context()
         
-        # Store in appropriate long/medium-term context based on intent
-        if "PROBLEM_DEFINITION" in intent_labels:
-            self.core.set_problem(message)
-        
-        if "CONSTRAINT_ADDITION" in intent_labels:
-            self.evolving.add_constraint(message)
-        
-        if "REFINEMENT" in intent_labels:
-            self.evolving.add_refinement(message)
+        # Store in appropriate long-term context based on intent
+        if role == "user":  # Only process user messages for long-term storage
+            if "PROBLEM_DEFINITION" in intent_labels:
+                self.core_context = ContextItem(
+                    content=content,
+                    keywords=keywords or [],
+                    timestamp=datetime.now(),
+                    intent_labels=intent_labels
+                )
+            
+            if "CONSTRAINT_ADDITION" in intent_labels or "REFINEMENT" in intent_labels:
+                context_item = ContextItem(
+                    content=content,
+                    keywords=keywords or [],
+                    timestamp=datetime.now(),
+                    intent_labels=intent_labels
+                )
+                self.evolving_context.append(context_item)
+    
+    def _trim_turn_context(self) -> None:
+        """Keep only the most recent messages in turn context"""
+        if len(self.turn_context) > self.max_turn_context:
+            self.turn_context = self.turn_context[-self.max_turn_context:]
     
     def get_context_summary(self) -> Dict[str, Any]:
-        """Get a summary of all context levels"""
+        """
+        Get a comprehensive summary of all context levels
+        
+        Returns:
+            Dict containing summaries of all context levels
+        """
+        # Format recent conversation
+        recent_conversation = ""
+        for msg in self.turn_context[-4:]:  # Last 4 messages
+            recent_conversation += f"{msg.role}: {msg.content}\n"
+        
+        # Extract core keywords
+        core_keywords = []
+        if self.core_context:
+            core_keywords = self.core_context.keywords
+        
+        # Extract evolving keywords
+        evolving_keywords = []
+        for item in self.evolving_context:
+            evolving_keywords.extend(item.keywords)
+        
         return {
-            "core_problem": self.core.get_problem(),
-            "evolving_items": self.evolving.get_all_items(),
-            "recent_conversation": self.turn.get_recent_conversation()
+            "core_problem": self.core_context.content if self.core_context else None,
+            "evolving_items": [item.content for item in self.evolving_context],
+            "recent_conversation": recent_conversation.strip(),
+            "core_keywords": core_keywords,
+            "evolving_keywords": evolving_keywords
         }
+    
+    def get_core_keywords_text(self) -> str:
+        """Get core keywords as formatted text"""
+        if not self.core_context or not self.core_context.keywords:
+            return ""
+        
+        keywords = [kw["keyword"] for kw in self.core_context.keywords[:5]]  # Top 5
+        return f"重要キーワード: {', '.join(keywords)}"
+    
+    def get_evolving_keywords_text(self) -> str:
+        """Get evolving keywords as formatted text"""
+        all_keywords = []
+        for item in self.evolving_context:
+            for kw in item.keywords[:3]:  # Top 3 per item
+                all_keywords.append(kw["keyword"])
+        
+        if not all_keywords:
+            return ""
+        
+        # Remove duplicates while preserving order
+        unique_keywords = list(dict.fromkeys(all_keywords))
+        return f"制約・詳細キーワード: {', '.join(unique_keywords[:8])}"  # Max 8 keywords
     
     def export_state(self) -> str:
-        """Export the entire context store state as JSON"""
-        def serialize_message(msg: Optional[Message]) -> Optional[Dict]:
-            if msg is None:
-                return None
-            return {
-                "content": msg.content,
-                "timestamp": msg.timestamp.isoformat(),
-                "metadata": msg.metadata
-            }
+        """
+        Export the current context state as JSON string
         
-        def serialize_messages(messages: List[Message]) -> List[Dict]:
-            return [serialize_message(msg) for msg in messages]
-        
+        Returns:
+            JSON string representation of the context state
+        """
         state = {
-            "core": {
-                "problem_definition": serialize_message(self.core.problem_definition)
-            },
-            "evolving": {
-                "constraints": serialize_messages(self.evolving.constraints),
-                "refinements": serialize_messages(self.evolving.refinements)
-            },
-            "turn": {
-                "messages": serialize_messages(self.turn.messages),
-                "max_turns": self.turn.max_turns
-            }
+            "core_context": {
+                "content": self.core_context.content,
+                "keywords": self.core_context.keywords,
+                "timestamp": self.core_context.timestamp.isoformat(),
+                "intent_labels": self.core_context.intent_labels
+            } if self.core_context else None,
+            "evolving_context": [
+                {
+                    "content": item.content,
+                    "keywords": item.keywords,
+                    "timestamp": item.timestamp.isoformat(),
+                    "intent_labels": item.intent_labels
+                }
+                for item in self.evolving_context
+            ],
+            "turn_context": [
+                {
+                    "content": msg.content,
+                    "role": msg.role,
+                    "timestamp": msg.timestamp.isoformat(),
+                    "intent_labels": msg.intent_labels
+                }
+                for msg in self.turn_context
+            ]
         }
-        
-        return json.dumps(state, indent=2, ensure_ascii=False)
+        return json.dumps(state, ensure_ascii=False, indent=2)
     
-    def import_state(self, json_state: str) -> None:
-        """Import context store state from JSON"""
-        def deserialize_message(data: Optional[Dict]) -> Optional[Message]:
-            if data is None:
-                return None
-            return Message(
-                content=data["content"],
-                timestamp=datetime.fromisoformat(data["timestamp"]),
-                metadata=data.get("metadata", {})
-            )
+    def import_state(self, json_state: str) -> bool:
+        """
+        Import context state from JSON string
         
-        def deserialize_messages(data: List[Dict]) -> List[Message]:
-            return [deserialize_message(item) for item in data if item is not None]
-        
+        Args:
+            json_state: JSON string representation of the context state
+            
+        Returns:
+            True if import was successful, False otherwise
+        """
         try:
             state = json.loads(json_state)
             
-            # Restore core context
-            self.core.problem_definition = deserialize_message(
-                state.get("core", {}).get("problem_definition")
-            )
+            # Import core context
+            core_data = state.get("core_context")
+            if core_data:
+                self.core_context = ContextItem(
+                    content=core_data["content"],
+                    keywords=core_data["keywords"],
+                    timestamp=datetime.fromisoformat(core_data["timestamp"]),
+                    intent_labels=core_data["intent_labels"]
+                )
+            else:
+                self.core_context = None
             
-            # Restore evolving context
-            evolving_data = state.get("evolving", {})
-            self.evolving.constraints = deserialize_messages(
-                evolving_data.get("constraints", [])
-            )
-            self.evolving.refinements = deserialize_messages(
-                evolving_data.get("refinements", [])
-            )
+            # Import evolving context
+            self.evolving_context = []
+            for item_data in state.get("evolving_context", []):
+                context_item = ContextItem(
+                    content=item_data["content"],
+                    keywords=item_data["keywords"],
+                    timestamp=datetime.fromisoformat(item_data["timestamp"]),
+                    intent_labels=item_data["intent_labels"]
+                )
+                self.evolving_context.append(context_item)
             
-            # Restore turn context
-            turn_data = state.get("turn", {})
-            self.turn.messages = deserialize_messages(
-                turn_data.get("messages", [])
-            )
-            self.turn.max_turns = turn_data.get("max_turns", 3)
+            # Import turn context
+            self.turn_context = []
+            for msg_data in state.get("turn_context", []):
+                message = Message(
+                    content=msg_data["content"],
+                    role=msg_data["role"],
+                    timestamp=datetime.fromisoformat(msg_data["timestamp"]),
+                    intent_labels=msg_data["intent_labels"]
+                )
+                self.turn_context.append(message)
             
-        except (json.JSONDecodeError, KeyError) as e:
-            raise ValueError(f"Failed to import context state: {str(e)}")
+            return True
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            return False
     
     def clear_all(self) -> None:
         """Clear all stored context"""
-        self.core = CoreContext()
-        self.evolving = EvolvingContext()
-        self.turn = TurnContext()
+        self.core_context = None
+        self.evolving_context = []
+        self.turn_context = []
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get context statistics"""
+        return {
+            "has_core_problem": self.core_context is not None,
+            "evolving_items_count": len(self.evolving_context),
+            "recent_messages_count": len(self.turn_context),
+            "total_keywords": len(self.get_context_summary().get("core_keywords", [])) + len(self.get_context_summary().get("evolving_keywords", []))
+        }
