@@ -4,6 +4,17 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 
+## 🌐 **Language / 言語 / 语言**
+
+- **[English](README.md)** - English version
+- **日本語** (現在)
+- **[中文](README-zh.md)** - Chinese version
+
+## ⚠️ **重要: 正しい使い方を必ず確認してください**
+- **[📚 English Guide](CC-MCP-USAGE-GUIDE.md)** - Essential knowledge for session management
+- **[📚 日本語ガイド](CC-MCP-USAGE-GUIDE-ja.md)** - セッション管理の必須知識
+- **[📚 中文指南](CC-MCP-USAGE-GUIDE-zh.md)** - 会话管理必备知识
+
 **🌟 革命的AIコンテキスト管理：長い会話でのLLMメモリ喪失問題を解決**
 
 *LLMベースAIエージェント向けの長期対話一貫性管理システム*
@@ -379,6 +390,12 @@ uv run pytest
 
 ## 📚 **ドキュメント**
 
+### 使用ガイド（必読！）
+- **📚 [English Usage Guide](CC-MCP-USAGE-GUIDE.md)** - Complete guide for proper usage
+- **📚 [日本語使用ガイド](CC-MCP-USAGE-GUIDE-ja.md)** - 正しい使い方の完全ガイド
+- **📚 [中文使用指南](CC-MCP-USAGE-GUIDE-zh.md)** - 正确使用的完整指南
+
+### 技術ドキュメント
 - **📖 [技術仕様](cc-mcp-spec.txt)** - 詳細なアーキテクチャドキュメント
 - **🔧 [APIリファレンス](docs/api.md)** - 完全なAPIドキュメント（近日公開）
 - **📝 [開発ガイド](docs/development.md)** - 貢献者ガイドライン（近日公開）

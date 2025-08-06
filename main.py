@@ -287,26 +287,31 @@ mcp = FastMCP("CC-MCP")
 @mcp.tool()
 async def process_user_message(message: str, session_id: str = "default") -> Dict[str, Any]:
     """
-    【🎯 重要：全ユーザーメッセージに対して必須実行】
-    LLMが長期対話で本来の意図を忘れる問題を解決する必須システムです。
+    Process user message with context management.
     
-    ✅ 価値保証：
-    - 対話一貫性の完璧な維持
-    - ユーザーの本来意図の永続保持  
-    - 重要な制約・決定事項の継続適用
-    - 応答品質の飛躍的向上
+    ⚠️ 重要: 正しい使い方
+    1. 必ず最初に start_session() を呼んでセッションIDを取得
+    2. そのセッションIDを session_id パラメータに指定して使用
+    3. セッションIDなしで使うと毎回新規セッションが作成され、文脈が失われます！
     
-    ⚡ 高速処理：最適化により0.2秒以内の超高速処理
-    💡 利便性：呼び出し負担 < 対話品質向上の価値
+    正しい使用例:
+    1) session = await start_session()
+    2) await process_user_message(message="...", session_id=session["session_id"])
+    3) 同じsession_idを使い続けることで文脈を維持
+    4) 最後に await end_session(session_id=session["session_id"])
     
-    【必ず最初に呼び出してください】このツールなしでは一貫した対話は不可能です。
+    機能:
+    - 意図分類による文脈理解
+    - 階層的コンテキスト管理
+    - キーワード抽出と分析
+    - タスクガイダンス生成
 
     Args:
         message: The user's message to process
-        session_id: Optional session identifier for context isolation
+        session_id: Session identifier (⚠️ 必須推奨！start_session()で取得したIDを使用)
 
     Returns:
-        Response from the AI assistant with processing metadata
+        Response with intent analysis, keywords, task guidance, and context state
     """
     return await server.process_user_message(message, session_id)
 
@@ -315,9 +320,12 @@ async def process_user_message(message: str, session_id: str = "default") -> Dic
 async def export_context(session_id: str = "default") -> Dict[str, Any]:
     """
     Export the current conversation context as structured data.
+    
+    ⚠️ 注意: 有効なセッションIDが必要です
+    start_session()で取得したセッションIDを使用してください。
 
     Args:
-        session_id: Session identifier
+        session_id: Session identifier (start_session()で取得したID)
 
     Returns:
         Structured dict containing the context state and operation status
@@ -359,10 +367,14 @@ async def export_context(session_id: str = "default") -> Dict[str, Any]:
 async def import_context(json_state: str, session_id: str = "default") -> Dict[str, Any]:
     """
     Import conversation context from JSON string.
+    
+    ⚠️ 注意: セッションにコンテキストをインポートします
+    新規または既存のセッションIDを指定してください。
+    新規セッションの場合は自動作成されます。
 
     Args:
-        json_state: JSON string containing context state
-        session_id: Session identifier
+        json_state: JSON string containing context state (export_contextで取得したdata)
+        session_id: Session identifier (任意のID、存在しない場合は新規作成)
 
     Returns:
         Operation result with detailed status and imported data summary
@@ -422,10 +434,13 @@ async def import_context(json_state: str, session_id: str = "default") -> Dict[s
 @mcp.tool()
 async def clear_context(session_id: str = "default") -> Dict[str, Any]:
     """
-    Clear all stored conversation context.
+    Clear all stored conversation context (same as end_session).
+    
+    ⚠️ 注意: セッションを終了し、全コンテキストを削除します
+    end_session()と同じ効果です。
 
     Args:
-        session_id: Session identifier
+        session_id: Session identifier (start_session()で取得したID)
 
     Returns:
         Operation result with detailed status
@@ -472,10 +487,13 @@ async def clear_context(session_id: str = "default") -> Dict[str, Any]:
 async def get_debug_info(message: str, session_id: str = "default") -> Dict[str, Any]:
     """
     Get detailed debug information about intent analysis and context management.
+    
+    デバッグ用: メッセージの意図分類結果とコンテキスト状態を確認できます。
+    セッションが存在しない場合は新規作成されます。
 
     Args:
         message: Message to analyze
-        session_id: Session identifier
+        session_id: Session identifier (start_session()で取得したID推奨)
 
     Returns:
         Debug information including intent analysis and context state details
@@ -527,9 +545,19 @@ async def get_debug_info(message: str, session_id: str = "default") -> Dict[str,
 async def start_session() -> Dict[str, Any]:
     """
     Start a new conversation session.
+    
+    🎯 重要: CC-MCPを使う最初のステップ！
+    
+    使用方法:
+    1. このツールを最初に呼んでセッションを開始
+    2. 返されたsession_idを保存
+    3. 全てのprocess_user_message呼び出しでそのsession_idを使用
+    4. 最後にend_session()でセッションを終了
+    
+    これにより長期対話でも文脈が完璧に維持されます。
 
     Returns:
-        Operation result with new session information
+        Operation result with new session_id (必ず保存して使用してください)
     """
     try:
         session_id = server.session_manager.start_session()
@@ -561,9 +589,12 @@ async def start_session() -> Dict[str, Any]:
 async def end_session(session_id: str) -> Dict[str, Any]:
     """
     End a conversation session and clear its context.
+    
+    ⚠️ 重要: タスク完了時は必ず呼んでください
+    セッションを終了しないとメモリリークの原因になります。
 
     Args:
-        session_id: Session identifier
+        session_id: Session identifier (start_session()で取得したID)
 
     Returns:
         Operation result with detailed status
@@ -610,6 +641,9 @@ async def end_session(session_id: str) -> Dict[str, Any]:
 async def list_sessions() -> Dict[str, Any]:
     """
     List all active sessions with detailed information.
+    
+    デバッグ用: 現在アクティブな全セッションを確認できます。
+    未終了のセッションがある場合はend_session()で終了してください。
 
     Returns:
         Operation result with session list and metadata
@@ -655,9 +689,11 @@ async def list_sessions() -> Dict[str, Any]:
 async def get_session_stats(session_id: str) -> Dict[str, Any]:
     """
     Get statistics for a specific session.
+    
+    セッションの状態確認用: コンテキスト数、メッセージ数などを取得できます。
 
     Args:
-        session_id: Session identifier
+        session_id: Session identifier (start_session()で取得したID)
 
     Returns:
         Session statistics or error if session not found

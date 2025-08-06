@@ -10,6 +10,11 @@
 - **[日本語](README-ja.md)** - Japanese version
 - **[中文](README-zh.md)** - Chinese version
 
+## ⚠️ **Important: Please Check the Proper Usage Guide**
+- **[📚 English Guide](CC-MCP-USAGE-GUIDE.md)** - Essential knowledge for session management
+- **[📚 日本語ガイド](CC-MCP-USAGE-GUIDE-ja.md)** - セッション管理の必須知識
+- **[📚 中文指南](CC-MCP-USAGE-GUIDE-zh.md)** - 会话管理必备知识
+
 **🌟 Revolutionary AI Context Management: Solving LLM Memory Loss in Long Conversations**
 
 *Long-term conversational consistency management system for LLM-powered AI agents*
@@ -388,6 +393,12 @@ uv run pytest
 
 ## 📚 **Documentation**
 
+### Usage Guides (Essential Reading!)
+- **📚 [English Usage Guide](CC-MCP-USAGE-GUIDE.md)** - Complete guide for proper usage
+- **📚 [日本語使用ガイド](CC-MCP-USAGE-GUIDE-ja.md)** - 正しい使い方の完全ガイド
+- **📚 [中文使用指南](CC-MCP-USAGE-GUIDE-zh.md)** - 正确使用的完整指南
+
+### Technical Documentation
 - **📖 [Technical Specification](cc-mcp-spec.txt)** - Detailed architecture documentation
 - **🔧 [API Reference](docs/api.md)** - Complete API documentation (Coming Soon)
 - **📝 [Development Guide](docs/development.md)** - Contributor guidelines (Coming Soon)
