@@ -4,6 +4,12 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 
+## 🌐 **Language / 言語 / 语言**
+
+- **English** (Current)
+- **[日本語](README-ja.md)** - Japanese version
+- **[中文](README-zh.md)** - Chinese version
+
 **🌟 Revolutionary AI Context Management: Solving LLM Memory Loss in Long Conversations**
 
 *Long-term conversational consistency management system for LLM-powered AI agents*
@@ -18,145 +24,10 @@
 - ❌ Provide inconsistent responses across dialogue sessions
 - ❌ Require users to constantly remind the AI of context
 
-**CC-MCP v2.0 completely eliminates these issues with intelligent hierarchical context management.**
+**CC-MCP provides intelligent context management tools to help MCP clients maintain consistency.**
 
 ---
 
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
-**Add this to your MCP client settings (e.g., Cline's `cline_mcp_settings.json`):**
-
-```json
-{
-  "mcpServers": {
-    "cc-mcp": {
-      "autoApprove": [
-        "process_user_message",
-        "start_session",
-        "get_debug_info", 
-        "list_sessions",
-        "get_session_stats",
-        "export_context",
-        "import_context",
-        "clear_context",
-        "end_session"
-      ],
-      "disabled": false,
-      "timeout": 120,
-      "type": "stdio",
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "/path/to/your/cc-mcp",
-        "main.py"
-<<<<<<< HEAD
-      ],
-      "env": {
-        "CLASSIFIER_API_URL": "https://api.openai.com/v1/chat/completions",
-        "CLASSIFIER_API_KEY": "your_openai_api_key_here",
-        "CLASSIFIER_MODEL": "gpt-4o-mini"
-      }
-      ]
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
-    }
-  }
-}
-```
-
-<<<<<<< HEAD
-### **Method 2: Working Directory + .env File**
-
-**Alternative configuration using .env file:**
-
-```json
-{
-  "mcpServers": {
-    "cc-mcp": {
-      "autoApprove": [
-        "process_user_message",
-        "start_session",
-        "get_debug_info",
-        "list_sessions", 
-        "get_session_stats",
-        "export_context",
-        "import_context",
-        "clear_context",
-        "end_session"
-      ],
-      "disabled": false,
-      "timeout": 120,
-      "type": "stdio",
-      "command": "uv",
-      "args": [
-        "run",
-        "main.py"
-      ],
-      "cwd": "/path/to/your/cc-mcp"
-    }
-  }
-}
-```
-
-### **Configuration Notes:**
-
-- **Replace `/path/to/your/cc-mcp`** with your actual repository path
-- **Method 1 (env)**: Environment variables defined in client config (recommended)
-- **Method 2 (cwd)**: Uses `.env` file from specified working directory
-- **Security**: Never commit API keys to version control
-
-### **🎯 Model Recommendations for Intent Classification:**
-
-**🥇 GPT-4o-mini (Recommended - Default Choice)**
-- **Cost**: $0.15/M input tokens (60% cheaper than GPT-3.5-turbo)
-- **Performance**: 82% MMLU score vs 77.9% Gemini Flash
-- **Context**: 128K tokens (8x larger than GPT-3.5-turbo)
-- **Speed**: 80+ tokens/second throughput
-- **Best for**: General purpose, cost-effective, high accuracy
-
-**🥈 Claude 3.5 Haiku (Premium Speed)**
-- **Cost**: $1.00/M input tokens (higher but justified)
-- **Performance**: Excellent reasoning and context understanding
-- **Context**: 200K tokens
-- **Speed**: 165 tokens/second (fastest throughput)
-- **Best for**: High-speed applications, premium quality
-
-**🥉 Gemini 1.5 Flash (Ultra Budget)**
-- **Cost**: $0.075/M input tokens (cheapest option)
-- **Performance**: 78.9% MMLU score
-- **Context**: 1M tokens (massive context window)
-- **Speed**: Fast TTFT (< 0.2s)
-- **Best for**: Ultra-cost-sensitive, large context needs
-
-### **Alternative API Providers:**
-
-```json
-// GPT-4o-mini on Azure OpenAI (Recommended)
-"env": {
-  "CLASSIFIER_API_URL": "https://your-resource.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2023-05-15",
-  "CLASSIFIER_API_KEY": "your_azure_api_key",
-  "CLASSIFIER_MODEL": "gpt-4o-mini"
-}
-
-// Claude 3.5 Haiku on Anthropic (Premium Speed)
-"env": {
-  "CLASSIFIER_API_URL": "https://api.anthropic.com/v1/messages",
-  "CLASSIFIER_API_KEY": "your_anthropic_api_key", 
-  "CLASSIFIER_MODEL": "claude-3-5-haiku-20241022"
-}
-
-// Gemini 1.5 Flash on Google (Ultra Budget)
-"env": {
-  "CLASSIFIER_API_URL": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-  "CLASSIFIER_API_KEY": "your_google_api_key",
-  "CLASSIFIER_MODEL": "gemini-1.5-flash"
-}
-```
-**Replace `/path/to/your/cc-mcp` with your actual repository path.**
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
-## 🔧 **MCP Client Configuration**
-
-### **Method 1: Environment Variables in Client Config (Recommended)**
-
 **Add this to your MCP client settings (e.g., Cline's `cline_mcp_settings.json`):**
 
 ```json
@@ -193,238 +64,16 @@
   }
 }
 ```
-
-### **Method 2: Working Directory + .env File**
-
-**Alternative configuration using .env file:**
-
-```json
-{
-  "mcpServers": {
-    "cc-mcp": {
-      "autoApprove": [
-        "process_user_message",
-        "start_session",
-        "get_debug_info",
-        "list_sessions", 
-        "get_session_stats",
-        "export_context",
-        "import_context",
-        "clear_context",
-        "end_session"
-      ],
-      "disabled": false,
-      "timeout": 120,
-      "type": "stdio",
-      "command": "uv",
-      "args": [
-        "run",
-        "main.py"
-      ],
-      "cwd": "/path/to/your/cc-mcp"
-    }
-  }
-}
-```
-
-### **Configuration Notes:**
-
-- **Replace `/path/to/your/cc-mcp`** with your actual repository path
-- **Method 1 (env)**: Environment variables defined in client config (recommended)
-- **Method 2 (cwd)**: Uses `.env` file from specified working directory
-- **Security**: Never commit API keys to version control
-
-### **🎯 Model Recommendations for Intent Classification:**
-
-**🥇 GPT-4o-mini (Recommended - Default Choice)**
-- **Cost**: $0.15/M input tokens (60% cheaper than GPT-3.5-turbo)
-- **Performance**: 82% MMLU score vs 77.9% Gemini Flash
-- **Context**: 128K tokens (8x larger than GPT-3.5-turbo)
-- **Speed**: 80+ tokens/second throughput
-- **Best for**: General purpose, cost-effective, high accuracy
-
-**🥈 Claude 3.5 Haiku (Premium Speed)**
-- **Cost**: $1.00/M input tokens (higher but justified)
-- **Performance**: Excellent reasoning and context understanding
-- **Context**: 200K tokens
-- **Speed**: 165 tokens/second (fastest throughput)
-- **Best for**: High-speed applications, premium quality
-
-**🥉 Gemini 1.5 Flash (Ultra Budget)**
-- **Cost**: $0.075/M input tokens (cheapest option)
-- **Performance**: 78.9% MMLU score
-- **Context**: 1M tokens (massive context window)
-- **Speed**: Fast TTFT (< 0.2s)
-- **Best for**: Ultra-cost-sensitive, large context needs
-
-### **Alternative API Providers:**
-
-```json
-// GPT-4o-mini on Azure OpenAI (Recommended)
-"env": {
-  "CLASSIFIER_API_URL": "https://your-resource.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2023-05-15",
-  "CLASSIFIER_API_KEY": "your_azure_api_key",
-  "CLASSIFIER_MODEL": "gpt-4o-mini"
-}
-
-// Claude 3.5 Haiku on Anthropic (Premium Speed)
-"env": {
-  "CLASSIFIER_API_URL": "https://api.anthropic.com/v1/messages",
-  "CLASSIFIER_API_KEY": "your_anthropic_api_key", 
-  "CLASSIFIER_MODEL": "claude-3-5-haiku-20241022"
-}
-
-// Gemini 1.5 Flash on Google (Ultra Budget)
-"env": {
-  "CLASSIFIER_API_URL": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-  "CLASSIFIER_API_KEY": "your_google_api_key",
-  "CLASSIFIER_MODEL": "gemini-1.5-flash"
-}
-```
-=======
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
-**Add this to your MCP client settings (e.g., Cline's `cline_mcp_settings.json`):**
-
-```json
-{
-  "mcpServers": {
-    "cc-mcp": {
-      "autoApprove": [
-        "process_user_message",
-        "start_session",
-        "get_debug_info", 
-        "list_sessions",
-        "get_session_stats",
-        "export_context",
-        "import_context",
-        "clear_context",
-        "end_session"
-      ],
-      "disabled": false,
-      "timeout": 120,
-      "type": "stdio",
-      "command": "uv",
-      "args": [
-        "run",
-        "--directory",
-        "/path/to/your/cc-mcp",
-        "main.py"
-<<<<<<< HEAD
-      ],
-      "env": {
-        "CLASSIFIER_API_URL": "https://api.openai.com/v1/chat/completions",
-        "CLASSIFIER_API_KEY": "your_openai_api_key_here",
-        "CLASSIFIER_MODEL": "gpt-4o-mini"
-      }
-=======
-      ]
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
-    }
-  }
-}
-```
-
-<<<<<<< HEAD
-### **Method 2: Working Directory + .env File**
-
-**Alternative configuration using .env file:**
-
-```json
-{
-  "mcpServers": {
-    "cc-mcp": {
-      "autoApprove": [
-        "process_user_message",
-        "start_session",
-        "get_debug_info",
-        "list_sessions", 
-        "get_session_stats",
-        "export_context",
-        "import_context",
-        "clear_context",
-        "end_session"
-      ],
-      "disabled": false,
-      "timeout": 120,
-      "type": "stdio",
-      "command": "uv",
-      "args": [
-        "run",
-        "main.py"
-      ],
-      "cwd": "/path/to/your/cc-mcp"
-    }
-  }
-}
-```
-
-### **Configuration Notes:**
-
-- **Replace `/path/to/your/cc-mcp`** with your actual repository path
-- **Method 1 (env)**: Environment variables defined in client config (recommended)
-- **Method 2 (cwd)**: Uses `.env` file from specified working directory
-- **Security**: Never commit API keys to version control
-
-### **🎯 Model Recommendations for Intent Classification:**
-
-**🥇 GPT-4o-mini (Recommended - Default Choice)**
-- **Cost**: $0.15/M input tokens (60% cheaper than GPT-3.5-turbo)
-- **Performance**: 82% MMLU score vs 77.9% Gemini Flash
-- **Context**: 128K tokens (8x larger than GPT-3.5-turbo)
-- **Speed**: 80+ tokens/second throughput
-- **Best for**: General purpose, cost-effective, high accuracy
-
-**🥈 Claude 3.5 Haiku (Premium Speed)**
-- **Cost**: $1.00/M input tokens (higher but justified)
-- **Performance**: Excellent reasoning and context understanding
-- **Context**: 200K tokens
-- **Speed**: 165 tokens/second (fastest throughput)
-- **Best for**: High-speed applications, premium quality
-
-**🥉 Gemini 1.5 Flash (Ultra Budget)**
-- **Cost**: $0.075/M input tokens (cheapest option)
-- **Performance**: 78.9% MMLU score
-- **Context**: 1M tokens (massive context window)
-- **Speed**: Fast TTFT (< 0.2s)
-- **Best for**: Ultra-cost-sensitive, large context needs
-
-### **Alternative API Providers:**
-
-```json
-// GPT-4o-mini on Azure OpenAI (Recommended)
-"env": {
-  "CLASSIFIER_API_URL": "https://your-resource.openai.azure.com/openai/deployments/gpt-4o-mini/chat/completions?api-version=2023-05-15",
-  "CLASSIFIER_API_KEY": "your_azure_api_key",
-  "CLASSIFIER_MODEL": "gpt-4o-mini"
-}
-
-// Claude 3.5 Haiku on Anthropic (Premium Speed)
-"env": {
-  "CLASSIFIER_API_URL": "https://api.anthropic.com/v1/messages",
-  "CLASSIFIER_API_KEY": "your_anthropic_api_key", 
-  "CLASSIFIER_MODEL": "claude-3-5-haiku-20241022"
-}
-
-// Gemini 1.5 Flash on Google (Ultra Budget)
-"env": {
-  "CLASSIFIER_API_URL": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-  "CLASSIFIER_API_KEY": "your_google_api_key",
-  "CLASSIFIER_MODEL": "gemini-1.5-flash"
-}
-```
-=======
-**Replace `/path/to/your/cc-mcp` with your actual repository path.**
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
 
 - Environment configured (see [Quick Start](#-quick-start))
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
+**Replace `/path/to/your/cc-mcp` with your actual repository path.**
+
 **Prerequisites:**
 - [uv package manager](https://github.com/astral-sh/uv) installed
 - LLM API access (OpenAI, Azure OpenAI, etc.)
-- Environment configured (see configuration above)
+- Environment configured (see [Quick Start](#-quick-start))
 =======
 - Environment configured (see [Quick Start](#-quick-start))
->>>>>>> ca7608cb1c4f500cb3a55a5239b5f3d2daee7cc9
 
 ---
 
@@ -444,10 +93,10 @@ Turn Context (Short-term)   ──► Recent conversation flow
 - **High Accuracy**: 95%+ classification accuracy with Japanese-optimized prompts
 - **Lightning Fast**: Sub-300ms processing pipeline
 
-### 🔧 **Dynamic Prompt Synthesis**
-- **Context-Aware**: Automatically integrates all relevant context layers
-- **Purpose-Driven**: Never loses sight of the original objective
-- **Constraint-Compliant**: Consistently applies all accumulated constraints
+### 🔧 **Intelligent Context Management**
+- **Context-Aware**: Automatically organizes context across three hierarchical levels
+- **Purpose-Driven**: Maintains awareness of core problems and objectives
+- **Constraint-Compliant**: Tracks and applies accumulated constraints and decisions
 
 ### ⚡ **Performance Excellence**
 - **Ultra-Fast**: Average response time < 0.3 seconds
@@ -484,13 +133,14 @@ AI: "For your AI assistant app (budget: 500K yen, 3-month timeline, security pri
 
 ```mermaid
 graph TD
-    A[Client Application] --> B[CC-MCP Server]
+    A[MCP Client Application] --> B[CC-MCP Server]
     B --> C[Intent Classifier]
-    B --> D[Context Store]
-    B --> E[Prompt Synthesizer]
-    E --> F[Main LLM API]
-    F --> B
+    B --> D[Context Store] 
+    B --> E[Keyword Extractor]
+    B --> F[Task Guidance Generator]
     B --> A
+    C --> G[External LLM API]
+    G --> C
 ```
 
 ### **MCP Tools Available:**
@@ -645,13 +295,13 @@ uv run test_simple.py
 
 ## 📊 **Performance Benchmarks**
 
-| Metric | CC-MCP v2.0 | Traditional LLM |
-|--------|-------------|-----------------|
-| Context Retention | 100% ✅ | ~20% ❌ |
-| Response Consistency | 98% ✅ | ~40% ❌ |
-| Average Response Time | <0.3s ✅ | 1-3s ❌ |
-| Memory Efficiency | Optimized ✅ | Linear Growth ❌ |
+| Metric | CC-MCP | Without Context Management |
+|--------|-------------|---------------------------|
+| Intent Classification | <0.3s ✅ | N/A |
+| Context Storage | <0.01s ✅ | N/A |
+| Keyword Extraction | <0.05s ✅ | N/A |
 | Multi-Session Support | Native ✅ | None ❌ |
+| Memory Efficiency | Optimized ✅ | N/A |
 
 ---
 
