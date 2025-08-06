@@ -22,6 +22,49 @@
 
 ---
 
+## 🔧 **MCP Client Configuration**
+
+**Add this to your MCP client settings (e.g., Cline's `cline_mcp_settings.json`):**
+
+```json
+{
+  "mcpServers": {
+    "cc-mcp": {
+      "autoApprove": [
+        "process_user_message",
+        "start_session",
+        "get_debug_info", 
+        "list_sessions",
+        "get_session_stats",
+        "export_context",
+        "import_context",
+        "clear_context",
+        "end_session"
+      ],
+      "disabled": false,
+      "timeout": 120,
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/path/to/your/cc-mcp",
+        "main.py"
+      ]
+    }
+  }
+}
+```
+
+**Replace `/path/to/your/cc-mcp` with your actual repository path.**
+
+**Prerequisites:**
+- [uv package manager](https://github.com/astral-sh/uv) installed
+- LLM API access (OpenAI, Azure OpenAI, etc.)
+- Environment configured (see [Quick Start](#-quick-start))
+
+---
+
 ## ✨ **Key Features**
 
 ### 🏗️ **Hierarchical Context Architecture**
