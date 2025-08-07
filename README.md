@@ -73,11 +73,24 @@
 - Environment configured (see [Quick Start](#-quick-start))
 **Replace `/path/to/your/cc-mcp` with your actual repository path.**
 
+**For Ollama users:**
+When using Ollama instead of OpenAI, modify the environment variables as follows:
+- Change `CLASSIFIER_API_URL` to your Ollama server URL (e.g., `http://localhost:11434/v1/chat/completions`)
+- Change `CLASSIFIER_MODEL` to your preferred Ollama model (e.g., `llama3.2`)
+- Remove or leave empty `CLASSIFIER_API_KEY` as it's not required for Ollama
+
+Example configuration for Ollama:
+```json
+"env": {
+  "CLASSIFIER_API_URL": "http://localhost:11434/v1/chat/completions",
+  "CLASSIFIER_MODEL": "llama3.2"
+}
+```
+
 **Prerequisites:**
-- [uv package manager](https://github.com/astral-sh/uv) installed
-- LLM API access (OpenAI, Azure OpenAI, etc.)
-- Environment configured (see [Quick Start](#-quick-start))
-=======
+- Python 3.13+
+- [uv package manager](https://github.com/astral-sh/uv)
+- LLM API access (Azure OpenAI, OpenAI, etc.) or a local LLM such as Ollama. or a local LLM such as Ollama.
 - Environment configured (see [Quick Start](#-quick-start))
 
 ---
@@ -159,9 +172,7 @@ graph TD
 - `get_session_stats` - Performance analytics
 
 ### **Transport Protocol:**
-- **SSE (Server-Sent Events)** - Recommended for real-time communication
-- **Default Port:** 8001
-- **Endpoint:** `http://127.0.0.1:8001/sse/`
+The default transport protocol is `stdio`. SSE (Server-Sent Events) is also supported for direct HTTP communication, using the endpoint `http://127.0.0.1:8001/sse/`.
 
 ---
 
@@ -170,7 +181,8 @@ graph TD
 ### **Prerequisites**
 - Python 3.13+
 - [uv package manager](https://github.com/astral-sh/uv)
-- LLM API access (Azure OpenAI, OpenAI, etc.)
+- LLM API access (Azure OpenAI, OpenAI, etc.) or a local LLM such as Ollama.
+- Environment configured (see [Quick Start](#-quick-start))
 
 ### **Installation**
 ```bash
@@ -194,16 +206,49 @@ CLASSIFIER_API_KEY=sk-your_openai_api_key_here
 CLASSIFIER_MODEL=gpt-3.5-turbo
 
 # Alternative providers (see .env.example for full list):
-# Azure OpenAI, Anthropic Claude, Google Gemini supported
+# Azure OpenAI, Anthropic Claude, Google Gemini, Ollama supported
+
+# For Ollama (Local LLM):
+# CLASSIFIER_API_URL=http://localhost:11434/v1/chat/completions
+# CLASSIFIER_API_KEY=not_required  # Ollama doesn't need auth; leave empty with the latest version
+# CLASSIFIER_MODEL=llama3
 ```
 
 ### **Launch Server**
 ```bash
-# Start CC-MCP server with SSE transport
-uv run --with mcp mcp run main.py
-
-# Server available at: http://127.0.0.1:8001/sse/
+# Start CC-MCP server with stdio transport (default for clients like Cline)
+uv run main.py
 ```
+
+### **🦙 Using Ollama (Local LLM)**
+
+CC-MCP now supports Ollama for local LLM usage without API costs. This feature was added in a recent commit.
+
+1. **Install and run Ollama:**
+```bash
+# Install Ollama from https://ollama.com/
+# Download and run a model
+ollama run llama3
+```
+
+2. **Configure CC-MCP for Ollama in `.env`:**
+```bash
+CLASSIFIER_API_URL=http://localhost:11434/v1/chat/completions
+CLASSIFIER_API_KEY=not_required  # Ollama doesn't need auth; leave empty
+CLASSIFIER_MODEL=llama3  # Or: mistral, gemma, phi, qwen, etc.
+```
+
+3. **Update your MCP client configuration:**
+Simply change the `env` section in your existing `cc-mcp` configuration:
+```json
+"env": {
+  "CLASSIFIER_API_URL": "http://localhost:11434/v1/chat/completions",
+  "CLASSIFIER_API_KEY": "not_required",
+  "CLASSIFIER_MODEL": "llama3"
+}
+```
+
+That's it! CC-MCP will now use your local Ollama model for intent classification.
 
 ---
 

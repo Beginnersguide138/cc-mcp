@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-import httpx
+import requests
 import json
 from pydantic import BaseModel
 
@@ -67,9 +67,8 @@ JSON:"""
             self.api_url = api_url
         self.api_key = api_key
         self.model = model
-        self.client = httpx.AsyncClient()
     
-    async def classify_intent(self, user_message: str) -> IntentResult:
+    def classify_intent(self, user_message: str) -> IntentResult:
         """
         Classify the intent of a user message.
         
@@ -79,6 +78,9 @@ JSON:"""
         Returns:
             IntentResult containing intent labels and reasoning
         """
+        import logging
+        logger = logging.getLogger(__name__)
+        
         prompt = self.PROMPT_TEMPLATE.format(user_message=user_message)
         
         payload = {
@@ -86,7 +88,7 @@ JSON:"""
             "messages": [
                 {"role": "user", "content": prompt}
             ],
-            "max_tokens": 200,
+            "max_tokens": 500,
             "temperature": 0.1
         }
         
@@ -95,38 +97,102 @@ JSON:"""
             "Content-Type": "application/json"
         }
         
+        # Debug logging
+        logger.info(f"🔧 Intent Classification Debug:")
+        logger.info(f"  API URL: {self.api_url}")
+        logger.info(f"  Model: {self.model}")
+        logger.info(f"  API Key: {'***' if self.api_key else '(empty)'}")
+        logger.info(f"  User Message: {user_message}")
+        
         try:
-            response = await self.client.post(
+            # Use requests instead of httpx with increased timeout
+            logger.info(f"📡 Sending request to Ollama...")
+            response = requests.post(
                 self.api_url,
                 json=payload,
-                headers=headers
+                headers=headers,
+                timeout=30,  # Further increased timeout for Ollama's large model
+                verify=False if self.api_url.startswith('http://') else True
             )
+            logger.info(f"✅ Response received: {response.status_code}")
             response.raise_for_status()
             
             result = response.json()
-            content = result["choices"][0]["message"]["content"].strip()
+            logger.info(f"🔍 Full Response JSON: {json.dumps(result, ensure_ascii=False, indent=2)}")
+            
+            # Handle Ollama's specific response structure
+            message = result["choices"][0]["message"]
+            content = message.get("content", "").strip()
+            reasoning = message.get("reasoning", "").strip()
+            
+            logger.info(f"📝 LLM Response Content: {content}")
+            logger.info(f"📝 LLM Response Reasoning: {reasoning}")
+            
+            # Try to parse JSON from content first, then from reasoning
+            response_text = content if content else reasoning
             
             # Parse JSON response
             try:
-                parsed = json.loads(content)
-                return IntentResult(
-                    intent=parsed["intent"],
-                    reason=parsed["reason"]
-                )
+                if response_text:
+                    # Try to extract JSON from the response
+                    if response_text.startswith("{"):
+                        parsed = json.loads(response_text)
+                    else:
+                        # Look for JSON within the text
+                        import re
+                        json_match = re.search(r'\{[^}]*"intent"[^}]*\}', response_text)
+                        if json_match:
+                            parsed = json.loads(json_match.group())
+                        else:
+                            raise json.JSONDecodeError("No JSON found", response_text, 0)
+                    
+                    logger.info(f"✅ JSON parsing successful: {parsed}")
+                    return IntentResult(
+                        intent=parsed["intent"],
+                        reason=parsed["reason"]
+                    )
+                else:
+                    raise json.JSONDecodeError("Empty response", "", 0)
+                    
             except (json.JSONDecodeError, KeyError) as e:
                 # Fallback to UNCLEAR if parsing fails
+                logger.error(f"❌ JSON parsing failed: {e}")
+                logger.error(f"   Raw response: {response_text}")
                 return IntentResult(
                     intent=["UNCLEAR"],
                     reason=f"Failed to parse LLM response: {str(e)}"
                 )
                 
-        except httpx.RequestError as e:
-            # Fallback to UNCLEAR if API call fails
+        except requests.exceptions.Timeout as e:
+            # Handle timeout errors
+            logger.error(f"❌ Request timeout: {e}")
             return IntentResult(
                 intent=["UNCLEAR"],
-                reason=f"API request failed: {str(e)}"
+                reason=f"Request timeout: {str(e)}"
             )
-    
-    async def close(self):
-        """Close the HTTP client."""
-        await self.client.aclose()
+        except requests.exceptions.ConnectionError as e:
+            # Handle connection errors
+            logger.error(f"❌ Connection error: {e}")
+            return IntentResult(
+                intent=["UNCLEAR"],
+                reason=f"Connection error: {str(e)}"
+            )
+        except requests.exceptions.HTTPError as e:
+            # Handle HTTP errors
+            logger.error(f"❌ HTTP error: {e}")
+            error_text = ""
+            try:
+                error_text = e.response.text if hasattr(e.response, 'text') else str(e)
+            except:
+                error_text = str(e)
+            return IntentResult(
+                intent=["UNCLEAR"],
+                reason=f"HTTP error {e.response.status_code}: {error_text}"
+            )
+        except Exception as e:
+            # Catch any other exceptions
+            logger.error(f"❌ Unexpected error: {type(e).__name__}: {e}")
+            return IntentResult(
+                intent=["UNCLEAR"],
+                reason=f"Unexpected error: {type(e).__name__}: {str(e)}"
+            )

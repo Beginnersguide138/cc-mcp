@@ -72,9 +72,23 @@
 
 **`/path/to/your/cc-mcp`を実際のリポジトリパスに置き換えてください。**
 
+**Ollamaユーザーの場合：**
+OpenAIの代わりにOllamaを使用する場合は、以下のように環境変数を変更してください：
+- `CLASSIFIER_API_URL`をOllamaサーバーのURLに変更（例：`http://localhost:11434/v1/chat/completions`）
+- `CLASSIFIER_MODEL`を使用したいOllamaモデルに変更（例：`llama3.2`）
+- `CLASSIFIER_API_KEY`は不要なので削除するか空にしてください
+
+Ollamaの設定例：
+```json
+"env": {
+  "CLASSIFIER_API_URL": "http://localhost:11434/v1/chat/completions",
+  "CLASSIFIER_MODEL": "llama3.2"
+}
+```
+
 **前提条件：**
 - [uvパッケージマネージャー](https://github.com/astral-sh/uv)のインストール
-- LLM APIアクセス（OpenAI、Azure OpenAI等）
+- LLM APIアクセス（Azure OpenAI、OpenAI等）またはローカルLLM（Ollamaなど）
 - 環境設定（[クイックスタート](#-クイックスタート)を参照）
 
 ---
@@ -155,9 +169,7 @@ graph TD
 - `get_session_stats` - パフォーマンス分析
 
 ### **転送プロトコル：**
-- **SSE（サーバー送信イベント）** - リアルタイム通信に推奨
-- **デフォルトポート：** 8001
-- **エンドポイント：** `http://127.0.0.1:8001/sse/`
+デフォルトの転送プロトコルは`stdio`です。直接HTTP通信用にSSE（サーバー送信イベント）もサポートされており、その場合のエンドポイントは `http://127.0.0.1:8001/sse/` です。
 
 ---
 
@@ -165,8 +177,8 @@ graph TD
 
 ### **前提条件**
 - Python 3.13+
-- [uvパッケージマネージャー](https://github.com/astral-sh/uv)
-- LLM APIアクセス（Azure OpenAI、OpenAI等）
+- [uvパッケージマネージャー](https://github.com/astral-sh/uv)のインストール
+- LLM APIアクセス（Azure OpenAI、OpenAI等）またはローカルLLM（Ollamaなど）
 
 ### **インストール**
 ```bash
@@ -195,10 +207,8 @@ CLASSIFIER_MODEL=gpt-3.5-turbo
 
 ### **サーバー起動**
 ```bash
-# SSE転送でCC-MCPサーバーを開始
-uv run --with mcp mcp run main.py
-
-# サーバーは以下で利用可能：http://127.0.0.1:8001/sse/
+# stdio転送（Clineなどのクライアント向けデフォルト）でCC-MCPサーバーを開始
+uv run main.py
 ```
 
 ---

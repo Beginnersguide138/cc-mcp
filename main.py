@@ -32,6 +32,14 @@ class CCMCPServer:
         classifier_api_key = os.getenv("CLASSIFIER_API_KEY", "")
         classifier_model = os.getenv("CLASSIFIER_MODEL", "gpt-3.5-turbo")
         
+        # Debug: Log configuration values
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("🔧 CC-MCP Server Configuration:")
+        logger.info(f"  API URL: {classifier_api_url}")
+        logger.info(f"  API Key: {'***' if classifier_api_key else '(empty)'}")
+        logger.info(f"  Model: {classifier_model}")
+        
         # Initialize components
         self.classifier = IntentClassifier(classifier_api_url, classifier_api_key, classifier_model)
         self.session_manager = SessionManager()
@@ -64,21 +72,10 @@ class CCMCPServer:
                 session_id = self.session_manager.start_session()
                 context_store = self.session_manager.get_context(session_id)
             
-            # 🚀 Step 2-4: 並列処理による高速化 (0.15秒)
-            # 意図分類、キーワード抽出、文脈更新を並列実行
-            async def lightweight_intent_classification():
-                """軽量化された意図分類"""
-                return await self.classifier.classify_intent(message)
-            
-            async def optimized_keyword_extraction():
-                """最適化されたキーワード抽出（上位3つのみ）"""
-                return self.keyword_extractor.extract_keywords(message, top_k=3)
-            
-            # 並列実行で処理時間短縮
-            intent_result, keywords = await asyncio.gather(
-                lightweight_intent_classification(),  
-                optimized_keyword_extraction()
-            )
+            # 🚀 Step 2-4: 同期処理による高速化 (0.15秒)
+            # 意図分類とキーワード抽出を順次実行
+            intent_result = self.classifier.classify_intent(message)
+            keywords = self.keyword_extractor.extract_keywords(message, top_k=3)
             
             # 🎯 Step 5: インクリメンタル文脈更新 (0.03秒)
             context_store.store_message(
@@ -264,11 +261,6 @@ class CCMCPServer:
     
     async def close(self):
         """Clean up resources"""
-        try:
-            await self.classifier.close()
-        except Exception:
-            pass
-        
         if self.http_client:
             try:
                 await self.http_client.aclose()
@@ -506,7 +498,7 @@ async def get_debug_info(message: str, session_id: str = "default") -> Dict[str,
             context_store = server.session_manager.get_context(session_id)
         
         # Get intent classification
-        intent_result = await server.classifier.classify_intent(message)
+        intent_result = server.classifier.classify_intent(message)
         
         # Extract keywords using TF-IDF
         keywords = server.keyword_extractor.extract_keywords(message, top_k=5)
@@ -738,24 +730,10 @@ def main():
         if mount_path:
             print(f"   Mount path: {mount_path}")
         
-        # Create new FastMCP instance with custom port if different from default
-        if port != 8000:
-            # Re-initialize mcp with custom port
-            mcp = FastMCP("CC-MCP", port=port)
-            # Register all tools again
-            register_tools()
-        
         mcp.run(transport="sse", mount_path=mount_path)
     else:
         print("🌐 Running with stdio transport (standard MCP)")
         mcp.run()
-
-
-def register_tools():
-    """Register all MCP tools with the server (for HTTP mode only)"""
-    # HTTP mode では新しい関数定義を登録する必要がある場合に使用
-    # 現在は不要（main関数で既に定義済み）
-    pass
 
 
 if __name__ == "__main__":

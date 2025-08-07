@@ -59,7 +59,21 @@
 }
 ```
 
-**请将 `/path/to/your/cc-mcp` 替换为您的实际仓库路径。**
+**将 `/path/to/your/cc-mcp` 替换为你的实际仓库路径。**
+
+**对于 Ollama 用户：**
+当使用 Ollama 而不是 OpenAI 时，请按如下方式修改环境变量：
+- 将 `CLASSIFIER_API_URL` 更改为 Ollama 服务器 URL（例如：`http://localhost:11434/v1/chat/completions`）
+- 将 `CLASSIFIER_MODEL` 更改为你想要的 Ollama 模型（例如：`llama3.2`）
+- 移除或留空 `CLASSIFIER_API_KEY`，因为 Ollama 不需要它
+
+Ollama 配置示例：
+```json
+"env": {
+  "CLASSIFIER_API_URL": "http://localhost:11434/v1/chat/completions",
+  "CLASSIFIER_MODEL": "llama3.2"
+}
+```
 
 **前置条件：**
 - 安装 [uv 包管理器](https://github.com/astral-sh/uv)
@@ -145,9 +159,7 @@ graph TD
 - `get_session_stats` - 性能分析
 
 ### **传输协议：**
-- **SSE（服务器发送事件）** - 推荐用于实时通信
-- **默认端口：** 8001
-- **端点：** `http://127.0.0.1:8001/sse/`
+默认传输协议是 `stdio`。也支持用于直接 HTTP 通信的 SSE（服务器发送事件），其端点为 `http://127.0.0.1:8001/sse/`。
 
 ---
 
@@ -156,7 +168,7 @@ graph TD
 ### **前置条件**
 - Python 3.13+
 - [uv 包管理器](https://github.com/astral-sh/uv)
-- LLM API 访问权限（Azure OpenAI、OpenAI 等）
+- LLM API 访问权限（Azure OpenAI、OpenAI 等）或本地 LLM (Ollama 等)
 
 ### **安装**
 ```bash
@@ -185,10 +197,8 @@ CLASSIFIER_MODEL=gpt-3.5-turbo
 
 ### **启动服务器**
 ```bash
-# 使用 SSE 传输启动 CC-MCP 服务器
-uv run --with mcp mcp run main.py
-
-# 服务器可在以下地址访问：http://127.0.0.1:8001/sse/
+# 使用 stdio 传输（Cline等客户端的默认方式）启动 CC-MCP 服务器
+uv run main.py
 ```
 
 ---
