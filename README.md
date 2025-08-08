@@ -121,6 +121,10 @@ Turn Context (Short-term)   ──► Recent conversation flow
 - **Scalable**: Handles multiple concurrent sessions
 - **Memory Efficient**: Intelligent context pruning and optimization
 
+### 💾 **Session Persistence**
+- **Stateful Operation**: All conversation sessions and keyword statistics are automatically saved to and restored from the `persistence/` directory, ensuring no data is lost between server restarts.
+- **Robustness**: This makes the server resilient, allowing context to be maintained even if the server crashes or is rebooted.
+
 ---
 
 ## 🎯 **Real-World Impact**

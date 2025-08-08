@@ -3,6 +3,8 @@ Session Manager for CC-MCP Server
 セッションIDベースの状態管理システム
 """
 import uuid
+import os
+import json
 from typing import Dict, Optional
 from context_store import HierarchicalContextStore
 import logging
@@ -15,11 +17,47 @@ class SessionManager:
     各対話セッションを一意に識別し、セッションごとのコンテキストストアを管理する
     """
     
-    def __init__(self):
+    def __init__(self, persistence_dir: str = "persistence"):
         # セッションIDをキーとしたコンテキストストアの辞書
         self._sessions: Dict[str, HierarchicalContextStore] = {}
-        logger.info("SessionManager initialized")
+        self.persistence_dir = persistence_dir
+        if not os.path.exists(self.persistence_dir):
+            os.makedirs(self.persistence_dir)
+        logger.info(f"SessionManager initialized with persistence directory: {persistence_dir}")
     
+    def save_session(self, session_id: str):
+        """Save a session's context to a file."""
+        context_store = self.get_context(session_id)
+        if context_store:
+            filepath = os.path.join(self.persistence_dir, f"{session_id}.json")
+            try:
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(context_store.export_state())
+                logger.info(f"Session {session_id} saved to {filepath}")
+            except Exception as e:
+                logger.error(f"Failed to save session {session_id}: {e}")
+
+    def load_all_sessions(self):
+        """Load all sessions from the persistence directory."""
+        logger.info(f"Loading sessions from {self.persistence_dir}...")
+        for filename in os.listdir(self.persistence_dir):
+            if filename.endswith(".json"):
+                session_id = os.path.splitext(filename)[0]
+                filepath = os.path.join(self.persistence_dir, filename)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        json_state = f.read()
+
+                    context_store = HierarchicalContextStore()
+                    if context_store.import_state(json_state):
+                        self._sessions[session_id] = context_store
+                        logger.info(f"Successfully loaded session {session_id}")
+                    else:
+                        logger.error(f"Failed to import state for session {session_id}")
+                except Exception as e:
+                    logger.error(f"Error loading session file {filepath}: {e}")
+        logger.info(f"Loaded {len(self._sessions)} sessions.")
+
     def start_session(self) -> str:
         """
         新規セッションを開始し、ユニークなsession_idを発行する。
@@ -33,8 +71,9 @@ class SessionManager:
         # 新しいコンテキストストアを作成
         context_store = HierarchicalContextStore()
         self._sessions[session_id] = context_store
+        self.save_session(session_id)  # Save the new empty session
         
-        logger.info(f"New session started: {session_id}")
+        logger.info(f"New session started and saved: {session_id}")
         return session_id
     
     def get_context(self, session_id: str) -> Optional[HierarchicalContextStore]:
@@ -66,7 +105,12 @@ class SessionManager:
         """
         if session_id in self._sessions:
             del self._sessions[session_id]
-            logger.info(f"Session ended: {session_id}")
+            filepath = os.path.join(self.persistence_dir, f"{session_id}.json")
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                logger.info(f"Session {session_id} ended and file deleted.")
+            else:
+                logger.info(f"Session {session_id} ended.")
             return True
         else:
             logger.warning(f"Session not found for termination: {session_id}")
