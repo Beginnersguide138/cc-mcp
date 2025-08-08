@@ -287,7 +287,8 @@ CC-MCPの価値を最大限に引き出すには：
 ## 🔗 関連ドキュメント
 
 - [README.md](README.md) - CC-MCPの概要
-- [cc-mcp-spec.txt](cc-mcp-spec.txt) - 技術仕様書
+- [README-ja.md](README-ja.md) - 日本語ドキュメント
+- [README-zh.md](README-zh.md) - 中国語ドキュメント
 - [session_manager.py](session_manager.py) - セッション管理の実装
 
 ---
