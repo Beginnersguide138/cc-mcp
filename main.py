@@ -713,7 +713,6 @@ def main():
 
     # Load persistent state
     server.keyword_extractor.load_corpus(corpus_filepath)
-    server.session_manager.load_all_sessions()
 
     # Register shutdown hook
     atexit.register(lambda: server.keyword_extractor.save_corpus(corpus_filepath))

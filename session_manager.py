@@ -24,6 +24,7 @@ class SessionManager:
         if not os.path.exists(self.persistence_dir):
             os.makedirs(self.persistence_dir)
         logger.info(f"SessionManager initialized with persistence directory: {persistence_dir}")
+        self.load_all_sessions()
     
     def save_session(self, session_id: str):
         """Save a session's context to a file."""
