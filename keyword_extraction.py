@@ -4,6 +4,8 @@ TF-IDFベースのキーワード抽出システム
 """
 import re
 import math
+import os
+import json
 from typing import List, Dict, Set
 from collections import Counter, defaultdict
 import logging
@@ -205,6 +207,51 @@ class KeywordExtractionEngine:
             )
         }
     
+    def save_corpus(self, filepath: str) -> None:
+        """
+        Save the IDF corpus to a file.
+
+        Args:
+            filepath: Path to the corpus file
+        """
+        try:
+            corpus_data = {
+                "document_corpus": self._document_corpus,
+                "document_frequency": self._document_frequency,
+                "total_documents": self._total_documents
+            }
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(corpus_data, f, ensure_ascii=False, indent=2)
+            logger.info(f"Corpus saved to {filepath}")
+        except Exception as e:
+            logger.error(f"Failed to save corpus: {e}")
+
+    def load_corpus(self, filepath: str) -> None:
+        """
+        Load the IDF corpus from a file.
+
+        Args:
+            filepath: Path to the corpus file
+        """
+        if not os.path.exists(filepath):
+            logger.warning(f"Corpus file not found at {filepath}, starting fresh.")
+            return
+
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                corpus_data = json.load(f)
+
+            self._document_corpus = corpus_data.get("document_corpus", [])
+            # defaultdict needs to be recreated
+            loaded_freq = corpus_data.get("document_frequency", {})
+            self._document_frequency = defaultdict(int, loaded_freq)
+            self._total_documents = corpus_data.get("total_documents", 0)
+
+            logger.info(f"Corpus loaded from {filepath}")
+        except Exception as e:
+            logger.error(f"Failed to load corpus, starting fresh: {e}")
+            self.reset_corpus()
+
     def reset_corpus(self) -> None:
         """
         コーパスをリセットする（テスト用）

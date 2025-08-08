@@ -26,7 +26,7 @@ class CCMCPServer:
     CC-MCP Server implementation using official MCP SDK
     """
     
-    def __init__(self):
+    def __init__(self, persistence_dir="persistence"):
         # Load classifier configuration
         classifier_api_url = os.getenv("CLASSIFIER_API_URL", "https://api.openai.com/v1/chat/completions")
         classifier_api_key = os.getenv("CLASSIFIER_API_KEY", "")
@@ -42,7 +42,7 @@ class CCMCPServer:
         
         # Initialize components
         self.classifier = IntentClassifier(classifier_api_url, classifier_api_key, classifier_model)
-        self.session_manager = SessionManager()
+        self.session_manager = SessionManager(persistence_dir=persistence_dir)
         self.keyword_extractor = KeywordExtractionEngine()
         
         self.http_client = None
@@ -270,7 +270,7 @@ class CCMCPServer:
 
 
 # Global server instance
-server = CCMCPServer()
+server = CCMCPServer(persistence_dir="persistence")
 
 # Initialize FastMCP server with correct import
 mcp = FastMCP("CC-MCP")
@@ -305,7 +305,12 @@ async def process_user_message(message: str, session_id: str = "default") -> Dic
     Returns:
         Response with intent analysis, keywords, task guidance, and context state
     """
-    return await server.process_user_message(message, session_id)
+    result = await server.process_user_message(message, session_id)
+    if result and result.get("context_state", {}).get("session_id"):
+        # The session might be created inside process_user_message, so get ID from result
+        updated_session_id = result["context_state"]["session_id"]
+        server.session_manager.save_session(updated_session_id)
+    return result
 
 
 @mcp.tool()
@@ -395,6 +400,7 @@ async def import_context(json_state: str, session_id: str = "default") -> Dict[s
         import_success = context_store.import_state(json_state)
         
         if import_success:
+            server.session_manager.save_session(session_id)
             return {
                 "success": True,
                 "session_id": session_id,
@@ -697,8 +703,21 @@ async def get_session_stats(session_id: str) -> Dict[str, Any]:
 def main():
     """Main entry point for the MCP server"""
     import sys
+    import os
+    import atexit
     global mcp
     
+    # Setup persistence directory
+    persistence_dir = "persistence"
+    corpus_filepath = os.path.join(persistence_dir, "keyword_corpus.json")
+
+    # Load persistent state
+    server.keyword_extractor.load_corpus(corpus_filepath)
+    server.session_manager.load_all_sessions()
+
+    # Register shutdown hook
+    atexit.register(lambda: server.keyword_extractor.save_corpus(corpus_filepath))
+
     print("🚀 Starting CC-MCP Server (Official MCP SDK)...")
     print("📋 Available tools:")
     print("  - process_user_message: Process user messages with context management")
