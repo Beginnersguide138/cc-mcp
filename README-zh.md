@@ -142,14 +142,18 @@ AI："对于您的 AI 助手应用（预算：50万日元，3个月时间限制�
 
 ```mermaid
 graph TD
-    A[MCP客户端应用] --> B[CC-MCP 服务器]
-    B --> C[意图分类器]
-    B --> D[上下文存储] 
-    B --> E[关键词提取器]
-    B --> F[任务指导生成器]
-    B --> A
-    C --> G[外部LLM API]
-    G --> C
+    subgraph CC-MCP 服务器
+        direction LR
+        C[意图分类器]
+        D[上下文存储]
+        E[关键词提取器]
+    end
+
+    A[MCP客户端] -- MCP工具 --> B((main.py))
+    B -- 管理 --> C
+    B -- 管理 --> D
+    B -- 管理 --> E
+    C -- 调用 --> G[外部LLM API]
 ```
 
 ### **可用的 MCP 工具：**
@@ -272,32 +276,6 @@ print(f"活动约束: {stats['active_constraints']}")
 
 ---
 
-## 🧪 **测试和验证**
-
-### **运行测试**
-```bash
-# 使用模拟 API 的单元测试
-uv run test_server.py
-
-# 实时 API 测试（需要 API 配置）
-uv run test_live.py
-
-# SSE 传输测试
-uv run test_sse_client.py
-
-# 性能基准测试
-uv run test_simple.py
-```
-
-### **预期测试结果**
-- ✅ 意图分类精度 > 95%
-- ✅ 跨会话的上下文持久化
-- ✅ 约束应用一致性
-- ✅ 平均响应时间 < 300毫秒
-- ✅ 内存高效的上下文管理
-
----
-
 ## 📊 **性能基准**
 
 | 指标 | CC-MCP | 无上下文管理 |
@@ -394,10 +372,9 @@ uv run pytest
 
 ## 📚 **文档**
 
-- **📖 [技术规范](cc-mcp-spec.txt)** - 详细架构文档
-- **🔧 [API 参考](docs/api.md)** - 完整的 API 文档（即将推出）
-- **📝 [开发指南](docs/development.md)** - 贡献者指南（即将推出）
-- **🎓 [教程系列](docs/tutorials/)** - 分步指南（即将推出）
+- **[📚 English Guide](CC-MCP-USAGE-GUIDE.md)** - Essential knowledge for session management
+- **[📚 日本語ガイド](CC-MCP-USAGE-GUIDE-ja.md)** - セッション管理の必須知識
+- **[📚 中文指南](CC-MCP-USAGE-GUIDE-zh.md)** - 会话管理必备知识
 
 ---
 
@@ -439,7 +416,7 @@ CC-MCP 代表了 AI 对话管理的突破：
 
 ### 🌟 **准备好革新您的 AI 对话了吗？**
 
-**[开始使用](#-快速开始)** | **[查看演示](demo.py)** | **[阅读文档](cc-mcp-spec.txt)**
+**[开始使用](#-快速开始)**
 
 ---
 

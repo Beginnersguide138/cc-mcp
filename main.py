@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from intent_classifier import IntentClassifier
-from context_store import HierarchicalContextStore  
+from context_store import HierarchicalContextStore
 from session_manager import SessionManager
 from keyword_extraction import KeywordExtractionEngine
 
@@ -143,75 +143,6 @@ class CCMCPServer:
                     "pipeline_version": "v2.0_optimized"
                 }
             }
-    
-    def _generate_task_guidance(self, context_store, intent_result, keywords) -> Dict[str, Any]:
-        """Generate task execution guidance based on context analysis"""
-        
-        guidance = {
-            "current_focus": "",
-            "next_actions": [],
-            "priority_level": "medium",
-            "context_awareness": {}
-        }
-        
-        # Analyze intent to provide guidance
-        if "PROBLEM_DEFINITION" in intent_result.intent:
-            guidance["current_focus"] = "新しい課題の定義と理解"
-            guidance["next_actions"] = [
-                "課題の詳細を明確化",
-                "要件と制約を整理",
-                "解決アプローチを検討"
-            ]
-            guidance["priority_level"] = "high"
-            
-        elif "CONSTRAINT_ADDITION" in intent_result.intent:
-            guidance["current_focus"] = "制約条件の追加と適用"
-            guidance["next_actions"] = [
-                "新しい制約を既存計画に統合",
-                "制約による影響を評価",
-                "代替案を検討"
-            ]
-            guidance["priority_level"] = "high"
-            
-        elif "REFINEMENT" in intent_result.intent:
-            guidance["current_focus"] = "要求の詳細化と改善"
-            guidance["next_actions"] = [
-                "既存要求を更新",
-                "詳細仕様を作成",
-                "実装計画を調整"
-            ]
-            guidance["priority_level"] = "medium"
-            
-        elif "QUESTION" in intent_result.intent:
-            guidance["current_focus"] = "質問への回答と情報提供"
-            guidance["next_actions"] = [
-                "質問内容を分析",
-                "関連情報を収集",
-                "適切な回答を提供"
-            ]
-            guidance["priority_level"] = "medium"
-            
-        else:  # UNCLEAR
-            guidance["current_focus"] = "発言内容の明確化"
-            guidance["next_actions"] = [
-                "追加情報を要求",
-                "意図を確認",
-                "具体例を求める"
-            ]
-            guidance["priority_level"] = "low"
-        
-        # Context awareness analysis
-        core_context = context_store.core_context
-        evolving_context = context_store.evolving_context
-        
-        guidance["context_awareness"] = {
-            "has_core_problem": bool(core_context),
-            "active_constraints": len(evolving_context),
-            "conversation_continuity": len(context_store.turn_context) > 0,
-            "key_topics": [kw["keyword"] for kw in keywords[:3]] if keywords else []
-        }
-        
-        return guidance
     
     def _generate_optimized_task_guidance(self, context_store, intent_result, keywords) -> Dict[str, Any]:
         """⚡ 最適化された軽量タスクガイダンス生成 (0.01秒目標)"""
@@ -510,7 +441,7 @@ async def get_debug_info(message: str, session_id: str = "default") -> Dict[str,
         keywords = server.keyword_extractor.extract_keywords(message, top_k=5)
         
         # Generate task guidance
-        task_guidance = server._generate_task_guidance(context_store, intent_result, keywords)
+        task_guidance = server._generate_optimized_task_guidance(context_store, intent_result, keywords)
         
         # Get context summary
         context_summary = context_store.get_context_summary()

@@ -155,14 +155,18 @@ AI: "For your AI assistant app (budget: 500K yen, 3-month timeline, security pri
 
 ```mermaid
 graph TD
-    A[MCP Client Application] --> B[CC-MCP Server]
-    B --> C[Intent Classifier]
-    B --> D[Context Store] 
-    B --> E[Keyword Extractor]
-    B --> F[Task Guidance Generator]
-    B --> A
-    C --> G[External LLM API]
-    G --> C
+    subgraph CC-MCP Server
+        direction LR
+        C[Intent Classifier]
+        D[Context Store]
+        E[Keyword Extractor]
+    end
+
+    A[MCP Client Application] -- MCP Tools --> B((main.py))
+    B -- Manages --> C
+    B -- Manages --> D
+    B -- Manages --> E
+    C -- Calls --> G[External LLM API]
 ```
 
 ### **MCP Tools Available:**
@@ -321,32 +325,6 @@ print(f"Active Constraints: {stats['active_constraints']}")
 
 ---
 
-## 🧪 **Testing & Validation**
-
-### **Run Tests**
-```bash
-# Unit tests with mocked APIs
-uv run test_server.py
-
-# Live API tests (requires API configuration)
-uv run test_live.py
-
-# SSE transport testing
-uv run test_sse_client.py
-
-# Performance benchmarks
-uv run test_simple.py
-```
-
-### **Expected Test Results**
-- ✅ Intent classification accuracy > 95%
-- ✅ Context persistence across sessions
-- ✅ Constraint application consistency
-- ✅ Response time < 300ms average
-- ✅ Memory efficient context management
-
----
-
 ## 📊 **Performance Benchmarks**
 
 | Metric | CC-MCP | Without Context Management |
@@ -447,11 +425,6 @@ uv run pytest
 - **📚 [日本語使用ガイド](CC-MCP-USAGE-GUIDE-ja.md)** - 正しい使い方の完全ガイド
 - **📚 [中文使用指南](CC-MCP-USAGE-GUIDE-zh.md)** - 正确使用的完整指南
 
-### Technical Documentation
-- **📖 [Technical Specification](cc-mcp-spec.txt)** - Detailed architecture documentation
-- **🔧 [API Reference](docs/api.md)** - Complete API documentation (Coming Soon)
-- **📝 [Development Guide](docs/development.md)** - Contributor guidelines (Coming Soon)
-- **🎓 [Tutorial Series](docs/tutorials/)** - Step-by-step guides (Coming Soon)
 
 ---
 
@@ -493,7 +466,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 🌟 **Ready to revolutionize your AI conversations?**
 
-**[Get Started](#-quick-start)** | **[View Demo](demo.py)** | **[Read Docs](cc-mcp-spec.txt)**
+**[Get Started](#-quick-start)**
 
 ---
 
