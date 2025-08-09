@@ -211,3 +211,6 @@ __marimo__/
 # AI Coding Tools
 .amazonq/
 .claude/
+
+# persistance
+persistence/

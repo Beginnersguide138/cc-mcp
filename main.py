@@ -211,6 +211,7 @@ mcp = FastMCP("CC-MCP")
 async def process_user_message(message: str, session_id: str = "default") -> Dict[str, Any]:
     """
     Process user message with context management.
+    ENSURE TO USE EVERY CHAT SHORTLY AFTER USER'S CHAT.
     
     ⚠️ 重要: 正しい使い方
     1. 必ず最初に start_session() を呼んでセッションIDを取得
