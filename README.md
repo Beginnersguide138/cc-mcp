@@ -385,18 +385,6 @@ print(f"Active Constraints: {stats['active_constraints']}")
 
 ---
 
-## 📊 **Performance Benchmarks**
-
-| Metric | CC-MCP | Without Context Management |
-|--------|-------------|---------------------------|
-| Intent Classification | <0.3s ✅ | N/A |
-| Context Storage | <0.01s ✅ | N/A |
-| Keyword Extraction | <0.05s ✅ | N/A |
-| Multi-Session Support | Native ✅ | None ❌ |
-| Memory Efficiency | Optimized ✅ | N/A |
-
----
-
 ## 🔧 **Advanced Configuration**
 
 ### **Custom Intent Labels**
