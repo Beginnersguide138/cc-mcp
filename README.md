@@ -29,7 +29,7 @@
 - ❌ Provide inconsistent responses across dialogue sessions
 - ❌ Require users to constantly remind the AI of context
 
-**CC-MCP provides intelligent context management tools to help MCP clients maintain consistency.**
+**CC-MCP provides intelligent context management tools to help LLM maintain consistency.**
 
 ---
 
@@ -46,12 +46,10 @@
         "list_sessions",
         "get_session_stats",
         "export_context",
-        "import_context",
-        "clear_context",
-        "end_session"
+        "import_context"
       ],
       "disabled": false,
-      "timeout": 120,
+      "timeout": 60,
       "type": "stdio",
       "command": "uv",
       "args": [
@@ -90,7 +88,7 @@ Example configuration for Ollama:
 **Prerequisites:**
 - Python 3.13+
 - [uv package manager](https://github.com/astral-sh/uv)
-- LLM API access (Azure OpenAI, OpenAI, etc.) or a local LLM such as Ollama. or a local LLM such as Ollama.
+- LLM API access (Azure OpenAI, OpenAI, etc.) or a local LLM such as Ollama.
 - Environment configured (see [Quick Start](#-quick-start))
 
 ---
@@ -108,16 +106,63 @@ Turn Context (Short-term)   ──► Recent conversation flow
 
 ### 🧠 **Intelligent Intent Classification**
 - **5 Intent Categories**: `PROBLEM_DEFINITION`, `CONSTRAINT_ADDITION`, `REFINEMENT`, `QUESTION`, `UNCLEAR`
-- **High Accuracy**: 95%+ classification accuracy with Japanese-optimized prompts
-- **Lightning Fast**: Sub-300ms processing pipeline
+
+#### **Detailed Intent Descriptions (as defined in `intent_classifier.py`):**
+The classification logic is based on a prompt that instructs the LLM to analyze the user's message and assign one or more of the following labels:
+
+- **`PROBLEM_DEFINITION`**: The user is defining the central problem they want to solve.
+  - *Example from prompt*: "I'd like to automatically summarize meeting minutes with AI, is there a good way to do that?"
+
+- **`CONSTRAINT_ADDITION`**: The user is adding constraints or conditions, such as budget or timeline.
+  - *Example from prompt*: "Sounds good. However, please limit the models used to open-source ones."
+
+- **`REFINEMENT`**: The user is making an existing requirement more specific or is modifying it.
+
+- **`QUESTION`**: The user is asking a simple question.
+
+- **`UNCLEAR`**: The message cannot be clearly classified into any of the above categories.
 
 ### 🔧 **Intelligent Context Management**
 - **Context-Aware**: Automatically organizes context across three hierarchical levels
 - **Purpose-Driven**: Maintains awareness of core problems and objectives
 - **Constraint-Compliant**: Tracks and applies accumulated constraints and decisions
 
+#### **How Memory Management is Implemented:**
+The "Intelligent context pruning and optimization" is achieved through a multi-faceted approach within the `HierarchicalContextStore` (`context_store.py`):
+
+1.  **Hierarchical Context Storage**: The system categorizes information into three tiers, preventing context degradation:
+    -   **Core Context**: Holds the primary problem definition, ensuring the main goal is never lost.
+    -   **Evolving Context**: Stores a list of constraints and refinements, allowing the solution space to be progressively narrowed.
+    -   **Turn Context**: A short-term memory that holds the last few conversational turns to maintain immediate conversational flow.
+
+2.  **Automatic Turn Context Pruning**: To prevent memory bloat, the `turn_context` is automatically trimmed. The `_trim_turn_context()` method ensures that only the most recent messages (default: 6) are kept, discarding older, less relevant turns.
+
+3.  **Keyword-Based Optimization**: Instead of relying on full-text history, the system extracts and stores weighted keywords for `Core` and `Evolving` contexts. The `get_context_summary()` method then provides a condensed, keyword-driven summary to the LLM, which is far more efficient to process than raw conversational history.
+
+This structured, rule-based approach ensures that memory is managed efficiently and intelligently, keeping the most critical information accessible without overwhelming the LLM.
+
+### 📊 **Statistical Keyword Extraction**
+- **TF-IDF Powered**: Identifies and extracts the most significant keywords from the conversation using the TF-IDF algorithm.
+- **Contextual Summarization**: Provides a condensed, keyword-based summary of the core problem and evolving constraints, which is more efficient for the LLM to process.
+- **Dynamic Corpus**: The keyword extraction engine continuously updates its document corpus with every new conversation, improving the accuracy of its IDF calculations over time.
+
+#### **How Keyword Extraction is Implemented (as defined in `keyword_extraction.py`):**
+The statistical keyword extraction uses a sophisticated TF-IDF implementation with several optimizations:
+
+1. **Term Frequency (TF) Calculation**: The `_calculate_tf()` method computes how frequently each word appears in a specific message relative to the total word count in that message. This identifies words that are emphasized within the current context.
+
+2. **Inverse Document Frequency (IDF) Calculation**: The `_calculate_idf()` method determines how rare a word is across all conversations in the corpus. The formula used is `IDF = log(total_documents / documents_containing_term)`, making rare words more valuable.
+
+3. **TF-IDF Scoring**: The `extract_keywords()` method combines TF and IDF scores (`TF-IDF = TF × IDF`) to identify words that are both frequent in the current message and rare across all conversations, indicating topic-specific importance.
+
+4. **Multilingual Tokenization**: The `_tokenize()` method uses regex patterns to extract Japanese (hiragana, katakana, kanji) and English words while filtering out common stop words in both languages.
+
+5. **Corpus Management**: The system maintains a growing document corpus that improves IDF accuracy over time. Each new message updates the `_document_frequency` dictionary and `_total_documents` count, making future extractions more precise.
+
+This approach ensures that extracted keywords represent the most contextually relevant terms while filtering out common, less meaningful words.
+
 ### ⚡ **Performance Excellence**
-- **Ultra-Fast**: Average response time < 0.3 seconds
+- **Ultra-Fast**: Works with less-capable models like `gpt-3.5-tubo`, `gpt-4o-mini` or `gemma3:4b`
 - **Scalable**: Handles multiple concurrent sessions
 - **Memory Efficient**: Intelligent context pruning and optimization
 
@@ -168,6 +213,21 @@ graph TD
     B -- Manages --> E
     C -- Calls --> G[External LLM API]
 ```
+
+#### **Component Descriptions:**
+This server is built on three core components that work together to provide context-aware responses:
+
+1.  **`Intent Classifier` (`intent_classifier.py`)**:
+    -   **Function**: This component analyzes the user's message to determine its underlying purpose.
+    -   **Implementation**: It sends the user's message to an external LLM (like GPT or a local Ollama model) with a carefully crafted prompt that asks the LLM to categorize the message into one of five intents: `PROBLEM_DEFINITION`, `CONSTRAINT_ADDITION`, `REFINEMENT`, `QUESTION`, or `UNCLEAR`.
+
+2.  **`Context Store` (`context_store.py`)**:
+    -   **Function**: This is the "memory" of the system. It organizes and stores the conversational context in a hierarchical structure.
+    -   **Implementation**: It uses a three-tiered system: a `core_context` for the main problem, an `evolving_context` for constraints and refinements, and a `turn_context` for the most recent messages. It automatically prunes the short-term `turn_context` to manage memory efficiently.
+
+3.  **`Keyword Extractor` (`keyword_extraction.py`)**:
+    -   **Function**: This engine identifies the most significant terms from user messages that are stored in the `core` and `evolving` contexts.
+    -   **Implementation**: It uses a classic **TF-IDF (Term Frequency-Inverse Document Frequency)** algorithm. It calculates how often a word appears in a message (TF) and how rare that word is across all conversations (IDF). The combination of these scores allows it to pinpoint keywords that are uniquely important to the current topic.
 
 ### **MCP Tools Available:**
 - `process_user_message` - Core message processing with context management
@@ -322,18 +382,6 @@ stats = await get_session_stats(session_id=session_id)
 print(f"Messages: {stats['total_messages']}")
 print(f"Active Constraints: {stats['active_constraints']}")
 ```
-
----
-
-## 📊 **Performance Benchmarks**
-
-| Metric | CC-MCP | Without Context Management |
-|--------|-------------|---------------------------|
-| Intent Classification | <0.3s ✅ | N/A |
-| Context Storage | <0.01s ✅ | N/A |
-| Keyword Extraction | <0.05s ✅ | N/A |
-| Multi-Session Support | Native ✅ | None ❌ |
-| Memory Efficiency | Optimized ✅ | N/A |
 
 ---
 
