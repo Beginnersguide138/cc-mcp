@@ -57,14 +57,8 @@ class IntentClassifier:
 JSON:"""
     
     def __init__(self, api_url: str, api_key: str, model: str = "gpt-3.5-turbo"):
-        # Ensure the URL includes the chat/completions endpoint
-        if not api_url.endswith('/chat/completions'):
-            if api_url.endswith('/'):
-                self.api_url = api_url + 'chat/completions'
-            else:
-                self.api_url = api_url + '/chat/completions'
-        else:
-            self.api_url = api_url
+        # Store the URL as-is since Azure URLs have query parameters
+        self.api_url = api_url
         self.api_key = api_key
         self.model = model
     
@@ -83,19 +77,27 @@ JSON:"""
         
         prompt = self.PROMPT_TEMPLATE.format(user_message=user_message)
         
+        # Build payload based on whether this is Azure or OpenAI
         payload = {
-            "model": self.model,
             "messages": [
                 {"role": "user", "content": prompt}
-            ],
-            "max_tokens": 500,
-            "temperature": 0.1
+            ]
         }
         
+        # For Azure, the model is in the URL, not the payload
+        # For OpenAI, we need to include the model in the payload
+        if "azure.com" not in self.api_url and "cognitiveservices.azure.com" not in self.api_url:
+            payload["model"] = self.model
+        
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+        
+        # Azure uses "api-key" header, OpenAI uses "Authorization" header
+        if "azure.com" in self.api_url or "cognitiveservices.azure.com" in self.api_url:
+            headers["api-key"] = self.api_key
+        else:
+            headers["Authorization"] = f"Bearer {self.api_key}"
         
         # Debug logging
         logger.info(f"🔧 Intent Classification Debug:")
@@ -103,15 +105,15 @@ JSON:"""
         logger.info(f"  Model: {self.model}")
         logger.info(f"  API Key: {'***' if self.api_key else '(empty)'}")
         logger.info(f"  User Message: {user_message}")
-        
+
         try:
             # Use requests instead of httpx with increased timeout
-            logger.info(f"📡 Sending request to Ollama...")
+            logger.info(f"📡 Sending request to API...")
             response = requests.post(
                 self.api_url,
                 json=payload,
                 headers=headers,
-                timeout=30,  # Further increased timeout for Ollama's large model
+                timeout=30,
                 verify=False if self.api_url.startswith('http://') else True
             )
             logger.info(f"✅ Response received: {response.status_code}")
@@ -120,31 +122,26 @@ JSON:"""
             result = response.json()
             logger.info(f"🔍 Full Response JSON: {json.dumps(result, ensure_ascii=False, indent=2)}")
             
-            # Handle Ollama's specific response structure
+            # Handle response structure
             message = result["choices"][0]["message"]
             content = message.get("content", "").strip()
-            reasoning = message.get("reasoning", "").strip()
             
             logger.info(f"📝 LLM Response Content: {content}")
-            logger.info(f"📝 LLM Response Reasoning: {reasoning}")
-            
-            # Try to parse JSON from content first, then from reasoning
-            response_text = content if content else reasoning
             
             # Parse JSON response
             try:
-                if response_text:
+                if content:
                     # Try to extract JSON from the response
-                    if response_text.startswith("{"):
-                        parsed = json.loads(response_text)
+                    if content.startswith("{"):
+                        parsed = json.loads(content)
                     else:
                         # Look for JSON within the text
                         import re
-                        json_match = re.search(r'\{[^}]*"intent"[^}]*\}', response_text)
+                        json_match = re.search(r'\{[^}]*"intent"[^}]*\}', content)
                         if json_match:
                             parsed = json.loads(json_match.group())
                         else:
-                            raise json.JSONDecodeError("No JSON found", response_text, 0)
+                            raise json.JSONDecodeError("No JSON found", content, 0)
                     
                     logger.info(f"✅ JSON parsing successful: {parsed}")
                     return IntentResult(
@@ -157,7 +154,7 @@ JSON:"""
             except (json.JSONDecodeError, KeyError) as e:
                 # Fallback to UNCLEAR if parsing fails
                 logger.error(f"❌ JSON parsing failed: {e}")
-                logger.error(f"   Raw response: {response_text}")
+                logger.error(f"   Raw response: {content}")
                 return IntentResult(
                     intent=["UNCLEAR"],
                     reason=f"Failed to parse LLM response: {str(e)}"

@@ -676,6 +676,7 @@ def main():
         print(f"🌐 Running SSE HTTP server on port {port}")
         if mount_path:
             print(f"   Mount path: {mount_path}")
+        print("💡 Server is ready. You can now send requests.")
         
         mcp.run(transport="sse", mount_path=mount_path)
     else:
