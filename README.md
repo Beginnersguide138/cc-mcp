@@ -266,6 +266,25 @@ cp .env.example .env
 # Edit .env with your API credentials
 ```
 
+### **Updating the Repository**
+To receive the latest updates after cloning the repository, use the following Git commands:
+
+```bash
+# Fetch the latest changes from the remote repository
+git fetch origin
+
+# Pull the latest changes from the main branch
+git pull origin main
+
+# Update dependencies (if they have changed)
+uv sync
+```
+
+It's recommended to regularly update your local repository to:
+- Get the latest features
+- Receive bug fixes
+- Ensure compatibility with the most recent version
+
 ### **Environment Configuration**
 ```bash
 # .env file example - Only 3 variables needed!
